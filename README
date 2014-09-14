@@ -1,0 +1,17 @@
+User Instruction:
+
+1) Install limix
+	- Either use pip install limix
+	- OR dowload limix from https://pypi.python.org/pypi/limix/0.5.4
+
+2) execute R scripts in R folder to pre-process the data as hdf5 files
+
+3) Adapt paths in CFG files
+
+4) run ipython notebook in demo folder for an example on the use of scLVM
+
+5) To reproduce the examples form the paper, run run_analysis scripts (distributed over several cores).  Chose the debug argument to run it on one core only.
+
+6) run run_collect script to collect individual result files. 
+
+7) non-linear PCA on cell-cycle corrected data was performed using FGPLVM in the GPmat toolbox (https://github.com/SheffieldML/GPmat)
