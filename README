@@ -6,9 +6,9 @@ User Instruction:
 
 2) execute R scripts in R folder to pre-process the data as hdf5 files
 
-3) Adapt paths in CFG files
+3) run ipython notebook in demo folder for an example on the use of scLVM
 
-4) run ipython notebook in demo folder for an example on the use of scLVM
+4) To distribute calculations over several cores, adapt paths in CFG files and run run_analysis scripts in demo folder
 
 5) To reproduce the examples form the paper, run run_analysis scripts (distributed over several cores).  Chose the debug argument to run it on one core only.
 
