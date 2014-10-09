@@ -1,10 +1,11 @@
 #scLVM
 
-####By Florian Buettner, Paolo Casale and Oliver Stegle (and ?)
 
 ##What is scLVM?
 
 scLVM is a modelling framework for single-cell RNA-seq data that can be used to dissect the observed heterogeneity into different sources, thereby allowing for the correction of confounding sources of variation. 
+
+By Florian Buettner, Paolo Casale and Oliver Stegle (and ?)
 
 ##Philosophy
 
