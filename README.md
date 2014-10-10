@@ -9,7 +9,7 @@ By Florian Buettner, Paolo Casale and Oliver Stegle (and ?)
 
 ##Philosophy
 
-Observed heterogeneity in single-cell profiling data is multi-factorial. scLVM provides an efficient framework for unravelling this heterogeneity, correcting for confounding facotrs and facilitating unbiased downstream analyses. scLVM builds on the Gaussian process latent variable mixed linear models. Our modelling approach is based on efficient inference algorithms implemented in [limix](https://github.com/PMBio/limix).
+Observed heterogeneity in single-cell profiling data is multi-factorial. scLVM provides an efficient framework for unravelling this heterogeneity, correcting for confounding facotrs and facilitating unbiased downstream analyses. scLVM builds on Gaussian process latent variable models and mixed linear models. Our modelling approach is based on efficient inference algorithms implemented in [limix](https://github.com/PMBio/limix).
 
 ##Installation:
 
