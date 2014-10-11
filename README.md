@@ -5,7 +5,7 @@
 
 scLVM is a modelling framework for single-cell RNA-seq data that can be used to dissect the observed heterogeneity into different sources, thereby allowing for the correction of confounding sources of variation. 
 
-By Florian Buettner, Paolo Casale and Oliver Stegle (and ?)
+By Florian Buettner, Paolo Casale and Oliver Stegle
 
 ##Philosophy
 
@@ -31,7 +31,7 @@ A good starting point is the ipython notebook `tcells_demo.ipynb` in the ./demo 
 
 ##Problems ?
 
-If you want to use scLVM and encounter any issues, please contact us by email: fbuettner.phys@gmail.com
+If you want to use scLVM and encounter any issues, please contact us by email: fbuettner.phys at gmail dot com
 
 ##License
 
