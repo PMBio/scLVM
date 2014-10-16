@@ -1,19 +1,26 @@
-# Copyright(c) 2014, The scLVM developers (Florian Buettner, Francesco Paolo Casale, Oliver Stegle)
-# All rights reserved.
-
-#make sure limix is in your python path
-#limix_path = '/Users/florian/Code/python_code/limix-0.6.4/build/release.darwin/interfaces/python'
+# Copyright(c) 2014, The scLVM developers (Forian Buettner, Paolo Francesco Casale, Oliver Stegle)
+#
+#Licensed under the Apache License, Version 2.0 (the "License");
+#you may not use this file except in compliance with the License.
+#You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+#Unless required by applicable law or agreed to in writing, software
+#distributed under the License is distributed on an "AS IS" BASIS,
+#WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#See the License for the specific language governing permissions and
+#limitations under the License.
 
 import sys
 sys.path.append('./..')
-#sys.path.append(limix_path)
 import limix
 import limix.modules.panama as PANAMA
 import limix.modules.varianceDecomposition as VAR
 import limix.modules.qtl as QTL
-from include.utils import dumpDictHdf5
-from include.utils import PCA 
-from include.utils import warning_on_one_line 
+from utils.misc import dumpDictHdf5
+from utils.misc import PCA 
+from utils.misc import warning_on_one_line 
 import scipy as SP
 import scipy.linalg
 import scipy.stats
@@ -52,85 +59,6 @@ class scLVM:
 			self.set_tech_noise(tech_noise)
 
 	
-	def fitGPLVMOLD(self,idx=None,k=1,standardize=False,out_dir='./cache',file_name=None,recalc=False):
-		"""
-		Args:
-			idx:			index of the genes involved
-							(e.g., for capturing cell cycle, index of cell cycle genes)
-			k:				number of latent factors
-			standardize:	if True, rescale gene expression by std prior to fitting GPLVM
-							(data are always mean-centered)
-			out_dir:		dir used to cache the results
-			file_name:		if not None, caches the results in the out_dir if the file does not exist
-							if the file exists loads the results if recalc is True
-			recalc:			if True and cache file exists, rewrite cacheFile
-		Returns:
-			X:				hidden variable
-			Kconf:			similarity matrix based on the confounding effect (XX.T)
-		"""
-		assert idx!=None, 'scLVM:: specify idx'
-		file_out = os.path.join(out_dir,file_name)
-		if not os.path.exists(file_out) or recalc==True:
-			# prepare data
-			Yconf = self.Y[:,idx]
-			Yconf-= Yconf.mean(0)
-			# fit gplvm
-			K = k
-			covar  = limix.CCovLinearISO(K)
-
-			ll  = limix.CLikNormalIso()
-			X0 = SP.random.randn(Yconf.shape[0],K)
-			X0 = PCA(Yconf,K)[0]
-			X0 /= SP.sqrt(K)
-			covar_params = SP.array([1.0])
-			lik_params = SP.array([1.0])
-
-			hyperparams = limix.CGPHyperParams()
-			hyperparams['covar'] = covar_params
-			hyperparams['lik'] = lik_params
-			hyperparams['X']   = X0
-
-			constrainU = limix.CGPHyperParams()
-			constrainL = limix.CGPHyperParams()
-			constrainU['covar'] = +5*SP.ones_like(covar_params);
-			constrainL['covar'] = 1*SP.ones_like(covar_params);
-			constrainU['lik'] = +5*SP.ones_like(lik_params);
-			constrainL['lik'] = 0*SP.ones_like(lik_params);
-			gp=limix.CGPbase(covar,ll)
-			gp.setY(Yconf)
-			gp.setX(X0)
-			lml0 = gp.LML(hyperparams)
-			dlml0 = gp.LMLgrad(hyperparams)
-			gpopt = limix.CGPopt(gp)
-			gpopt.setOptBoundLower(constrainL);
-			gpopt.setOptBoundUpper(constrainU);
-
-			gpopt.opt()
-			#1. get latent factor
-			params = gp.getParams()
-			#X
-			X = params['X']
-
-			#linear GPLVM with fixed noise
-			#2. get covaraince
-			Kconf = covar.K()
-
-			# export results
-			if not os.path.exists(out_dir):
-				os.makedirs(out_dir)
-			fout = h5py.File(file_out,'w')
-			RV = {'X':X,'Kconf':Kconf}
-			RV['cc_noise_filtered'] = idx
-			dumpDictHdf5(RV,fout)
-			fout.close()
-		else:
-			# load results from the file
-			f = h5py.File(file_out,'r')
-			X = f['X'][:]; Kconf = f['Kconf'][:]
-			f.close()
-
-		return X,Kconf
-
 	def fitGPLVM(self,idx=None,k=1,standardize=False,out_dir='./cache',file_name=None,recalc=False, use_ard=False):
 		"""
 		Args:
