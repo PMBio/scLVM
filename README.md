@@ -9,7 +9,7 @@ By Florian Buettner, Paolo Casale and Oliver Stegle
 
 ##Philosophy
 
-Observed heterogeneity in single-cell profiling data is multi-factorial. scLVM provides an efficient framework for unravelling this heterogeneity, correcting for confounding facotrs and facilitating unbiased downstream analyses. scLVM builds on Gaussian process latent variable models and mixed linear models. Our modelling approach is based on efficient inference algorithms implemented in [limix](https://github.com/PMBio/limix).
+Observed heterogeneity in single-cell profiling data is multi-factorial. scLVM provides an efficient framework for unravelling this heterogeneity, correcting for confounding facotrs and facilitating unbiased downstream analyses. scLVM builds on Gaussian process latent variable models and mixed linear models. Our modelling approach is based on efficient inference algorithms implemented in [LIMIX](https://github.com/PMBio/limix).
 
 ##Installation:
 
@@ -27,14 +27,12 @@ For an example of how raw counts can be processed appropriately, see R/transform
 
 ##How to use scLVM?
 
-A good starting point are the tutorials here:
-https://github.com/PMBio/scLVM/tutorials.
+A good starting point are the [tutorials](https://github.com/PMBio/scLVM/blob/master/tutorials).
 
-For a example that shows how scLVM can be applied to the T-cell data considered in Buettner et al. [2], please see this notebook:
-http://nbviewer.ipython.org/github/pmbio/scLVM/blob/master/tutorials/tcell_demo.ipynb.
-Or alternatively, a PDF export: https://github.com/PMBio/scLVM/blob/master/tutorials/tcell_demo.pdf
+For a example that shows how scLVM can be applied to the T-cell data considered in Buettner et al. [2], we have prepared a notebook that can be viewed [interactively](http://nbviewer.ipython.org/github/pmbio/scLVM/blob/master/tutorials/tcell_demo.ipynb) or alternatively as [PDF](https://github.com/PMBio/scLVM/blob/master/tutorials/tcell_demo.pdf) export.
 
-##Problems ?
+
+ ##Problems ?
 
 If you want to use scLVM and encounter any issues, please contact us by email: scLVM-dev@ebi.ac.uk
 
