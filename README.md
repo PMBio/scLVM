@@ -30,7 +30,7 @@ The current software version should be considered as beta. Still, the method is 
 
 A good starting point are the [tutorials](https://github.com/PMBio/scLVM/blob/master/tutorials).
 
-For an illustration of how scLVM can be applied to the T-cell data considered in Buettner et al. [2], we have prepared a notebook that can be viewed [interactively](http://nbviewer.ipython.org/github/pmbio/scLVM/blob/master/tutorials/tcell_demo.ipynb) or alternatively as [PDF](https://github.com/PMBio/scLVM/blob/master/tutorials/tcell_demo.pdf) export.
+For an illustration of how scLVM can be applied to the T-cell data considered in Buettner et al. [1], we have prepared a notebook that can be viewed [interactively](http://nbviewer.ipython.org/github/pmbio/scLVM/blob/master/tutorials/tcell_demo.ipynb) or alternatively as [PDF](https://github.com/PMBio/scLVM/blob/master/tutorials/tcell_demo.pdf) export.
 
 
 ##Problems ?
