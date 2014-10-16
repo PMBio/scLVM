@@ -20,7 +20,7 @@ Observed heterogeneity in single-cell profiling data is multi-factorial. scLVM p
 
 * scLVM relies heavily on [limix](https://github.com/PMBio/limix), which can be installed using ``pip install limix`` on most systems.
 
-* If you would like to use the non-linear GPLVM for visualisation, you require the [GPy](https://github.com/SheffieldML/GPy) package. This can be installed using `pip install GPy` 
+* If you would like to use the non-linear GPLVM for visualisation, we suggest installing the [GPy](https://github.com/SheffieldML/GPy) package. This can be installed using `pip install GPy`.
 
 * Preprocessing steps are executed in R and require R>3.0:
 For an example of how raw counts can be processed appropriately, see [R/transform_counts_Tcells.R](https://github.com/PMBio/scLVM/blob/master/R/transform_counts_Tcells.R). A more extensively commented markdown version of the script can be found here: [transform_counts_demo.Rmd](https://github.com/PMBio/scLVM/blob/master/R/transform_counts_demo.Rmd).
