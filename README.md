@@ -5,15 +5,15 @@
 
 scLVM is a modelling framework for single-cell RNA-seq data that can be used to dissect the observed heterogeneity into different sources, thereby allowing for the correction of confounding sources of variation. 
 
-By Florian Buettner, Paolo Casale and Oliver Stegle
+Software by Florian Buettner, Paolo Casale and Oliver Stegle. scLVM is explained in more detail in the accompanying publication [1].
 
 ##Philosophy
 
-Observed heterogeneity in single-cell profiling data is multi-factorial. scLVM provides an efficient framework for unravelling this heterogeneity, correcting for confounding facotrs and facilitating unbiased downstream analyses. scLVM builds on Gaussian process latent variable models and mixed linear models. Our modelling approach is based on efficient inference algorithms implemented in [LIMIX](https://github.com/PMBio/limix).
+Observed heterogeneity in single-cell profiling data is multi-factorial. scLVM provides an efficient framework for unravelling this heterogeneity, correcting for confounding factors and facilitating unbiased downstream analyses. scLVM builds on Gaussian process latent variable models and linear mixed models. The underlying models are based on inference schemes implemented in [LIMIX](https://github.com/PMBio/limix).
 
 ##Installation:
 
-* scLVM is particularly easy to install using the [anaconda](https://store.continuum.io/cshop/anaconda) python distribution.
+* scLVM is particularly easy to install using the [anaconda](https://store.continuum.io/cshop/anaconda) python distribution. 
  
 * It requires Python 2.7 with
   - scipy, h5py, numpy, pylab
@@ -23,11 +23,10 @@ Observed heterogeneity in single-cell profiling data is multi-factorial. scLVM p
 * If you would like to use the non-linear GPLVM for visualisation, you require the [GPy](https://github.com/SheffieldML/GPy) package. This can be installed using `pip install GPy` 
 
 * Preprocessing steps are executed in R and require R>3.0:
-For an example of how raw counts can be processed appropriately, see R/transform_counts_Tcells.R. A more extensively commented markdown version of the script can be found here: transform_counts_demo.Rmd.
+For an example of how raw counts can be processed appropriately, see [R/transform_counts_Tcells.R](https://github.com/PMBio/scLVM/blob/master/R/transform_counts_Tcells.R). A more extensively commented markdown version of the script can be found here: [transform_counts_demo.Rmd](https://github.com/PMBio/scLVM/blob/master/R/transform_counts_demo.Rmd).
 
 ##How to use scLVM?
-The current software version should be considered as beta. Still, the method is working and can be used to reproduce the result of the accompanying publication [1]. More extensive tutorials and examples will be available soon.
-
+The current software version should be considered as beta. Still, the method is working and can be used to reproduce the result of the accompanying publication [1]. More extensive documentation, tutorials and examples will be available soon.
 
 A good starting point are the [tutorials](https://github.com/PMBio/scLVM/blob/master/tutorials).
 
