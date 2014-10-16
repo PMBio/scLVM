@@ -26,6 +26,8 @@ Observed heterogeneity in single-cell profiling data is multi-factorial. scLVM p
 For an example of how raw counts can be processed appropriately, see R/transform_counts_Tcells.R. A more extensively commented markdown version of the script can be found here: transform_counts_demo.Rmd.
 
 ##How to use scLVM?
+The current software version should be considered as beta. Still, the method is working and can be used to reproduce the result of the accompanying publication [1]. More extensive tutorials and examples will be available soon.
+
 
 A good starting point are the [tutorials](https://github.com/PMBio/scLVM/blob/master/tutorials).
 
@@ -40,4 +42,4 @@ If you want to use scLVM and encounter any issues, please contact us by email: s
 See [LICENSE] https://github.com/PMBio/scLVM/blob/master/license.txt
 
 ###References
-Buettner F, Natarajan KN, Casale FP, Proserpio V, Scialdone A, Theis FJ, Teichmann SA, Marioni JC & Stegle O, 2014. Accounting for cell-to-cell heterogeneity in single-cell RNA-Seq data reveals novel structure between cells, Nat Biotech, in press.
+[1] Buettner F, Natarajan KN, Casale FP, Proserpio V, Scialdone A, Theis FJ, Teichmann SA, Marioni JC & Stegle O, 2014. Accounting for cell-to-cell heterogeneity in single-cell RNA-Seq data reveals novel structure between cells, Nat Biotech, in press.
