@@ -22,20 +22,24 @@ Observed heterogeneity in single-cell profiling data is multi-factorial. scLVM p
 
 * If you would like to use the non-linear GPLVM for visualisation, you require the [GPy](https://github.com/SheffieldML/GPy) package. This can be installed using `pip install GPy` 
 
-* Preprocessing setps are executed in R and require R>3.0:
+* Preprocessing steps are executed in R and require R>3.0:
+For an example of how raw counts can be processed appropriately, see R/transform_counts_Tcells.R. A more extensively commented markdown version of the script can be found here: transform_counts_demo.Rmd.
 
 ##How to use scLVM?
 
-A good starting point is the ipython notebook `tcells_demo.ipynb` in the ./demo folder. You can view a html version of the notebook or open it using `ipython notebook` and reproduce the results from Buettner et al 2014 [2]. The notebook requires an hdf5 data file containing the relevant data (normalised read counts etc.). We generate this data structure in R, and illustrate in `transform_counts_demo.Rmd` how this was done for the T-cell data. 
+A good starting point are the tutorials here:
+https://github.com/PMBio/scLVM/tutorials.
 
+For a example that shows how scLVM can be applied to the T-cell data considered in Buettner et al. [2], please see this notebook:
+http://nbviewer.ipython.org/github/pmbio/scLVM/blob/master/tutorials/tcell_demo.ipynb.
+Or alternatively, a PDF export: https://github.com/PMBio/scLVM/blob/master/tutorials/tcell_demo.pdf
 
 ##Problems ?
 
-If you want to use scLVM and encounter any issues, please contact us by email: fbuettner.phys at gmail dot com
+If you want to use scLVM and encounter any issues, please contact us by email: scLVM-dev@ebi.ac.uk
 
 ##License
-
-See 
+See [LICENSE] https://github.com/PMBio/scLVM/blob/master/license.txt
 
 ###References
 Buettner F, Natarajan KN, Casale FP, Proserpio V, Scialdone A, Theis FJ, Teichmann SA, Marioni JC & Stegle O, 2014. Accounting for cell-to-cell heterogeneity in single-cell RNA-Seq data reveals novel structure between cells, Nat Biotech, in press.
