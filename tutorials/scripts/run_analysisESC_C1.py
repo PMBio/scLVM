@@ -14,7 +14,7 @@ import scipy as SP
 import limix
 import limix.modules.varianceDecomposition as VAR
 import pdb
-sys.path.append('../scLVM')
+#sys.path.append('../scLVM')
 from scLVM import scLVM
 import matplotlib as mpl
 mpl.use('Agg')

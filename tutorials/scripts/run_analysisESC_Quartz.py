@@ -6,7 +6,7 @@ sys.path.append('../include')
 #limix_path = '/Users/florian/Code/python_code/limix-master/build/release.darwin/interfaces/python'
 #sys.path.append(limix_path)
 sys.path.append('./..')
-sys.path.append('../scLVM')
+#sys.path.append('../scLVM')
 from scLVM import scLVM
 import limix.modules.panama as PANAMA
 import limix.modules.varianceDecomposition as VAR
