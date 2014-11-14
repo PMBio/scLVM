@@ -5,9 +5,11 @@ library(EBImage)
 library(rhdf5)
 library(DESeq)
 library(statmod)
-library("hom.Hs.inp.db")
+library(hom.Hs.inp.db)
 library(AnnotationDbi)
 library(org.Mm.eg.db)
+library(rPython)
+
 
 #1. REad in data
 load('./../data_Tcells.Rdata')
@@ -135,4 +137,6 @@ countsERCC_mat=as.matrix(countsERCC * 1)
 countsMmus_mat = as.matrix(countsMmus * 1)
 
 h5save(ccCBall_gene_indices,gene_names,sym_names,sym_names_het,cellcyclegenes_filter,cellcyclegenes,cell_names,nCountsMmus,genes_heterogen,LogVar_techMmus,LogNcountsMmus,countsMmus_mat,sfERCC,countsERCC_mat,file='data_Tcells_normCounts.h5f')
+
+
 
