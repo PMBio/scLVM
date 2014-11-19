@@ -24,7 +24,7 @@ import pdb
 
 import sys
 sys.path.append('./..')
-from include.utils import regressOut
+from utils.misc import regressOut
 
 # import limix
 
