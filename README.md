@@ -25,6 +25,8 @@ Observed heterogeneity in single-cell profiling data is multi-factorial. scLVM p
 * Preprocessing steps are executed in R and require R>3.0:
 For an example of how raw counts can be processed appropriately, see [R/transform_counts_Tcells.R](https://github.com/PMBio/scLVM/blob/master/R/transform_counts_Tcells.R). A more extensively commented markdown version of the script can be found here: [transform_counts_demo.Rmd](https://github.com/PMBio/scLVM/blob/master/R/transform_counts_demo.Rmd).
 
+* For users who prefer to run the entire scLVM pipeline in R, we also provide an R wrapper wich is based on [rPython](http://cran.r-project.org/web/packages/rPython/index.html). A commented R markdown script can be found here: [scLVMr.Rmd](https://github.com/PMBio/scLVM/blob/master/R/scLVMr.Rmd).
+
 ##How to use scLVM?
 The current software version should be considered as beta. Still, the method is working and can be used to reproduce the result of the accompanying publication [1]. More extensive documentation, tutorials and examples will be available soon.
 
