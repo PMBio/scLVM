@@ -1,6 +1,6 @@
 ---
 title: "An R wrapper for scLVM"
-author: "Florian Buettner, Kedar N. Natarajan, F. Paolo Casale, Valentina Proserpio, Antonio Scialdone, Fabian J. Theis, Sarah A. Teichmann, John C. Marioni and Oliver Stegle"
+author: "Florian Buettner,  F. Paolo Casale and Oliver Stegle"
 #date: "7. Oktober 2014"
 output: html_document
 ---
@@ -8,22 +8,48 @@ Stage 1: Fitting process
 ---
 
 As scLVM was originally written in python, we recommend using the native python implementation as demonstrated in the tutorials and ipython notebooks on github.
-However, we also provide an R wrapper. Note that this is not a native R implementation of scLVM, but calls the relevant python code from within R. That is why, in order to run scLVM-R, you need to install python 2.7 with scipy, h5py, numpy and pylab. It is particularly easy to install python using the anaconda python distribution. scLVM relies heavily on limix, which can be installed using pip install limix on most systems. In addition, you need to install the R package `rPython`. For details on installation and requirements, have a look at our  [github page](https://github.com/PMBio/scLVM/wiki/Installation).
+However, we also provide an R wrapper. Note that this is not a native R implementation of scLVM, but calls the relevant python code from within R. That is why, in order to run scLVM-R, you need to install python 2.7 with scipy, h5py, numpy and pylab. It is particularly easy to install python using the anaconda python distribution. scLVM relies heavily on limix, which can be installed using pip install limix on most systems. In addition, you need to install the R package `rPython`. For details on installation and requirements, have a look at the Installation section of our  [github page](https://github.com/PMBio/scLVM/wiki/Installation).
 
-In the following we assume you have python, R and all dependencies installed and run the code from the pre-processing notebook. 
-First of all we need to load the rPython package and load the necessary variables into python. We can then initialise the scLVM model and fit the latent factor. Here, we fit the cell cycle factor. 
+In the following we assume you have python, R and all dependencies installed and run the code from the pre-processing notebook. This should provide result in the following variables needed by scLVM:
+
+
+* Gene x Cell Matrix of normalised and log-transformed read counts: `LogNcountsMmus`
+* Boolean vector indicating variable genes (or the gene set for which you would like to run scLVM): `genes_heterogen`
+* Technical noise estimates for all genes (in the log space): `LogVar_techMmus`
+* Vector of indices of cell cycle genes: `cellcyclegenes_filter`
+* Vector of gene IDs: `gene_names`
+
+In order to run scLVM from within R, we first of all need to load the necessary variables into python (using the rPython package). 
 
 ```{r}
 library(rPython)
-Y=t(LogNcountsMmus)
-genes_het_bool = as.vector(genes_heterogen)
-geneID = gene_names
-tech_noise=as.vector(LogVar_techMmus)
+library(gplots)
+#load the wrapper funxtions
+source('./R2py.R')
 
-set_data(Y=Y, tech_noise=tech_noise, genes_het_bool = genes_het_bool, geneID=geneID) 
-idx_cell_cycle_noise_filtered = intersect(which(rowMeans(LogNcountsMmus)>0),c(unique(ccCBall_gene_indices,cellcyclegenes_filter))) #indices for cell cycle genes
+#rename a few variables
+load('~/Code/python_code/scPy/scLVM/R/Tcell_data_processed.rdata')
+Y = t(LogNcountsMmus) #normalised read counts
+genes_het_bool = as.vector(genes_heterogen) #variable genes
+geneID = gene_names #gene IDs
+tech_noise = as.vector(LogVar_techMmus) #technical noise
+
+#Load the data into scLVM using the set_data routine
+set_data(Y = Y, tech_noise = tech_noise, genes_het_bool = genes_het_bool, geneID = geneID) 
+```
+
+Now that the data are pushed to python, we can then initialise the scLVM model and fit a latent factor. Here, we fit the cell cycle factor. We first use an ARD prior and fit a large number in order to assess how many factors we need in order to capture cell cycle. 
+
+```{r}
+#initialise scLVM
 init_scLVM(Y=Y, push_var = FALSE) #initialise sclvm model - we've loaded Y already so don't need to push it to python
 
+
+#cell cycle genes
+idx_cell_cycle_noise_filtered = intersect(which(rowMeans(LogNcountsMmus)>0),c(unique(ccCBall_gene_indices,cellcyclegenes_filter)))
+
+
+#Fit cell cycle factor
 k = 80                    # number of latent factors
 out_dir = './cache'       # folder where results are cached
 file_name = 'Kcc.hdf5'    # name of the cache file
@@ -43,7 +69,7 @@ plot(seq(1, length(gplvm_ard$X_ard)), gplvm_ard$X_ard, xlab = '# Factor', ylab =
 title('Variance explained by latent factors')
 ```
 
-In our case there is a large gap between the first and the second factor which is why we only retain one latent factor. That is why we re-fit the GPLVM with one latent factor only.
+In this example (and generally when considering cell cycle as the confounding factor), there is a large gap in the proportion of explained variance between the first and the second factor. This suggests, that a single latent factor underlies the variation captured by the cellcycle genes. Consequently, we choose to re-fit the scLVM mdoel with one latent factor only.
 
 ```{r}
 gplvm = fitGPLVM(idx=idx_cell_cycle_noise_filtered,k=1,out_dir=out_dir,file_name=file_name,recalc=TRUE, use_ard=FALSE)
@@ -70,9 +96,13 @@ Ihet = which(genes_het_bool==1)
 Y    = Y[,Ihet]
 tech_noise = tech_noise[Ihet]
 geneID = geneID[Ihet]
+```
 
+The computation time for the next step can be substantial. If large datasets are considerd, it may be advisable to distribute these calculations on a high performance compute cluster. In this case i0 and i1 determine the range of genes for wich this anlaysis is performed. Here, we fit the model on 100 genes.
+
+```{r}
 i0 = 1    # gene from which the analysis starts
-i1 = 20   # gene at which the analysis ends
+i1 = 100   # gene at which the analysis ends
 
 # define sclvm
 init_scLVM(Y,geneID=geneID,tech_noise=tech_noise)
@@ -84,7 +114,7 @@ varianceDecomposition(K=Kcc,i0=i0,i1=i1)
 Once the contribution of cell cycle to the observed variance is estimated, cell-cycled corrected gene expression levels can be obtained. Variance components are normalised such that they sum uo to 1 and genes for which the variance decompostion has not convered are filtered out.
 
 ```{r}
-normalize=TRUE    # variance components are normalizaed to sum up to one
+normalize = TRUE    # variance components are normalizaed to sum up to one
 
 # get variance components
 results_var = getVarianceComponents(normalize=normalize)
@@ -115,7 +145,7 @@ i0 = 1     # gene from which the analysis starts
 i1 = 5    # gene at which the analysis ends
 
 # fit lmm without correction
-res_nocorr = fitLMM(K=None,i0=i0,i1=i1,verbose=TRUE, geneID = geneID)
+res_nocorr = fitLMM(K=NULL,i0=i0,i1=i1,verbose=TRUE, geneID = geneID)
 
 # fit lmm with correction
 res_corr = fitLMM(K=Kcc,i0=i0,i1=i1,verbose=TRUE, geneID = geneID)
