@@ -8,11 +8,11 @@ library(statmod)
 library(hom.Hs.inp.db)
 library(AnnotationDbi)
 library(org.Mm.eg.db)
-library(rPython)
+
 
 
 #1. REad in data
-load('./../data_Tcells.Rdata')
+load('./data_Tcells.Rdata')
 
 dataMouse[ 1:10, 1:5 ]
 
@@ -136,7 +136,7 @@ genes_heterogen <- (padjA<0.1)*1
 countsERCC_mat=as.matrix(countsERCC * 1)
 countsMmus_mat = as.matrix(countsMmus * 1)
 
-h5save(ccCBall_gene_indices,gene_names,sym_names,sym_names_het,cellcyclegenes_filter,cellcyclegenes,cell_names,nCountsMmus,genes_heterogen,LogVar_techMmus,LogNcountsMmus,countsMmus_mat,sfERCC,countsERCC_mat,file='data_Tcells_normCounts.h5f')
+#h5save(ccCBall_gene_indices,gene_names,sym_names,sym_names_het,cellcyclegenes_filter,cellcyclegenes,cell_names,nCountsMmus,genes_heterogen,LogVar_techMmus,LogNcountsMmus,countsMmus_mat,sfERCC,countsERCC_mat,file='data_Tcells_normCounts.h5f')
 
 
 
