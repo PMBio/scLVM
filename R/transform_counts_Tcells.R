@@ -12,7 +12,7 @@ library(rPython)
 
 
 #1. REad in data
-load('./../data_Tcells.Rdata')
+load('./data_Tcells.Rdata')
 
 dataMouse[ 1:10, 1:5 ]
 
