@@ -28,7 +28,6 @@ library(gplots)
 source('./R2py.R')
 
 #rename a few variables
-load('~/Code/python_code/scPy/scLVM/R/Tcell_data_processed.rdata')
 Y = t(LogNcountsMmus) #normalised read counts
 genes_het_bool = as.vector(genes_heterogen) #variable genes
 geneID = gene_names #gene IDs
