@@ -43,4 +43,4 @@ If you want to use scLVM and encounter any issues, please contact us by email: s
 See [LICENSE](https://github.com/PMBio/scLVM/blob/master/license.txt)
 
 ###References
-[1] Buettner F, Natarajan KN, Casale FP, Proserpio V, Scialdone A, Theis FJ, Teichmann SA, Marioni JC & Stegle O, 2014. Accounting for cell-to-cell heterogeneity in single-cell RNA-Seq data reveals novel structure between cells, Nat Biotech, in press.
+[1] Buettner F, Natarajan KN, Casale FP, Proserpio V, Scialdone A, Theis FJ, Teichmann SA, Marioni JC & Stegle O, 2014. Computational analysis of cell-to-cell heterogeneity in single-cell RNA-Sequencing data reveals hidden subpopulation of cells, Nature Biotechnology, doi: 10.1038/nbt.3102.
