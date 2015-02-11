@@ -3,6 +3,7 @@ import scipy as SP
 import pylab as PL
 from matplotlib import cm
 import h5py
+#make sure your paths point to limix and scLVM directories
 limix_path = '/Users/florian/Code/python_code/limix-0.6.4/build/release.darwin/interfaces/python'
 sclvm_path = '/Users/florian/Code/python_code/scPy/scLVM/'
 sys.path.append(limix_path)
