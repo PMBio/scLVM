@@ -5,6 +5,8 @@
 
 scLVM is a modelling framework for single-cell RNA-seq data that can be used to dissect the observed heterogeneity into different sources, thereby allowing for the correction of confounding sources of variation. 
 
+scLVM was primarily designed to account for cell-cycle induced variations in single-cell RNA-seq data where cell cycle is the primary soure of variability. For other use cases tutorials will follow shortly.
+
 Software by Florian Buettner, Paolo Casale and Oliver Stegle. scLVM is explained in more detail in the accompanying publication [1].
 
 ##Philosophy
