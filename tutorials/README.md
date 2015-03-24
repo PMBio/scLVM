@@ -22,6 +22,6 @@ These R scripts generate an hdf5 file containng the variables required by the co
 ##scLVM
 scLVM is implemented in python and we recommend to run it in python as demonstrated in the [demo ipython notebook](http://nbviewer.ipython.org/github/pmbio/scLVM/blob/master/tutorials/tcell_demo.ipynb). 
 
-Alternatively, we provide an R wrapper, so that you can also run the entire pipeline in R, as demonstrated here: [scLVMr.Rmd](https://github.com/PMBio/scLVM/blob/master/R/scLVMr.Rmd)
+Alternatively, we provide an R wrapper, so that you can also run the entire pipeline in R, as demonstrated here: [scLVMr.Rmd](https://github.com/PMBio/scLVM/blob/master/R/scLVMr.Rmd). We are currently working on a proper R package with additional functionality, so stay tuned!
 
 In case you would like to distribute the computations over many cores, we provide scripts for easy parallelisation here: [scripts](https://github.com/PMBio/scLVM/tree/master/tutorials/scripts)
