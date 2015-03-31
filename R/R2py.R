@@ -1,36 +1,20 @@
-set_data = function(Y=NULL, tech_noise=NULL, genes_het_bool = NULL, geneID=NULL){
-  python.load('init_data.py') #loads variables from hdf5 file into python
-  print('Loading data ...(this can take up to 30s)')
-  Y = as.matrix(Y)
-  row.names(Y)=c() #strip Y of column and row names
-  colnames(Y)=c()
-  python.assign("Y",Y) #outfile is the hdf file generated in the previous setting
-  python.exec("Y = SP.array(Y)") #matrices are passed as lists and need to be converted back to mtrices
-  python.assign("tech_noise",tech_noise)
-  python.exec("tech_noise = SP.array(tech_noise)")
-  python.assign("genes_het_bool",genes_het_bool)
-  python.exec("genes_het_bool = SP.array(genes_het_bool)")
-  python.assign("geneID",geneID)
-  print('Done.')
-}
+scLVM_py = function(Y=NULL,geneID=NULL,tech_noise=NULL){
 
-init_scLVM = function(Y=NULL,geneID=NULL,tech_noise=NULL, push_var = TRUE){
-  if(push_var==TRUE){
   row.names(Y)=c() #strip Y of column and row names
   colnames(Y)=c()
   python.assign("Y",Y) #outfile is the hdf file generated in the previous setting
   python.exec("Y = SP.array(Y)") #matrices are passed as lists and need to be converted back to mtrices
   python.assign("tech_noise",tech_noise)
-  python.exec("tech_noise = SP.array(tech_noise)")
+  if(!is.null(tech_noise)){
+    python.exec("tech_noise = SP.array(tech_noise)")}
   python.assign("geneID",geneID)  
-  }
   
   python.exec("sclvm = scLVM(Y,geneID=geneID,tech_noise=tech_noise)")
   
 }
 
 
-fitGPLVM = function(idx=NULL,k=1,standardize=FALSE,out_dir='./cache',file_name=NULL,recalc=FALSE, use_ard=FALSE){
+fitGPLVM_py = function(idx=NULL,k=1,standardize=FALSE,out_dir='./cache',file_name=NULL,recalc=FALSE, use_ard=FALSE){
   python.assign("idx",idx-1)#R indexing to python indeces
   python.assign("k",k)
   python.assign("standardize",standardize)
@@ -38,13 +22,18 @@ fitGPLVM = function(idx=NULL,k=1,standardize=FALSE,out_dir='./cache',file_name=N
   python.assign("file_name",file_name)
   python.assign("recalc",recalc)
   python.assign("use_ard",use_ard)
-  python.exec("X_ARD,Kcc_ARD,varGPLVM_ARD = sclvm.fitGPLVM(idx=idx,k=k,standardize=standardize,out_dir=out_dir,file_name=file_name,recalc=recalc, use_ard=use_ard)")
+  python.exec("X,Kcc_ARD,varGPLVM_ARD = sclvm.fitGPLVM(idx=idx,k=k,standardize=standardize,out_dir=out_dir,file_name=file_name,recalc=recalc, use_ard=use_ard)")
   
   res=list()
   if(use_ard==TRUE){
     python.exec("Xard = list(varGPLVM_ARD['X_ARD'])")
     X_ard =  python.get("Xard")    
-    res$X_ard = X_ard}
+    res$X_ard = X_ard
+  }
+  
+  python.exec("X = X.tolist()")
+  X =  python.get("X")    
+  res$X = X
   
   python.exec("Kcc = Kcc_ARD.tolist()")
   Kcc = do.call(rbind,python.get("Kcc"))
@@ -53,7 +42,7 @@ fitGPLVM = function(idx=NULL,k=1,standardize=FALSE,out_dir='./cache',file_name=N
   return(res)
 }
 
-varianceDecomposition = function(K=NULL,i0=1,i1=1){
+varianceDecomposition_py = function(K=NULL,i0=1,i1=1){
   K = as.matrix(K)
   row.names(K)=c() #strip Y of column and row names
   colnames(K)=c()
@@ -67,7 +56,7 @@ varianceDecomposition = function(K=NULL,i0=1,i1=1){
 }
 
 
-getVarianceComponents = function(normalize=normalize){
+getVarianceComponents_py = function(normalize=normalize){
   python.assign("normalize", normalize)
   python.exec('var, var_info = sclvm.getVarianceComponents(normalize=normalize)')
   python.exec("conv = var_info['conv'].tolist()")
@@ -84,14 +73,14 @@ getVarianceComponents = function(normalize=normalize){
 }
 
 
-getCorrectedExpression = function(){
+getCorrectedExpression_py = function(){
   python.exec("Ycorr = sclvm.getCorrectedExpression()")
   Ycorr = do.call(rbind, python.get("Ycorr.tolist()"))
   colnames(Ycorr) <- python.get("geneID_vd")
   return(Ycorr)
 }
 
-fitLMM <- function(K=NULL,i0=i0,i1=i1,verbose=TRUE, geneID=NULL){
+fitLMM_py <- function(K=NULL,i0=i0,i1=i1,verbose=TRUE, geneID=NULL){
 
   python.assign("i0", as.integer(i0-1))
   python.assign("i1", as.integer(i1))
