@@ -1,7 +1,7 @@
 scLVM <- setClass(
 
 #  scLVM class
-#  Args:
+#  slots:
 #       geneID:                 G vector of geneIDs
 #       Y:                      gene expression matrix [N, G]
 #       tech_noise:             G vector of tech_noise

@@ -1,5 +1,5 @@
 fitTechnicalNoise <- function(nCountsEndo,nCountsERCC=NULL,
-                              use_ERCC = FALSE,fit_type = "counts",plot=TRUE, fit_opts=NULL){  
+                              use_ERCC = TRUE,fit_type = "counts",plot=TRUE, fit_opts=NULL){  
   if(is.null(nCountsERCC) & use_ERCC==TRUE){
     print("You didn't provide ERCC counts so I will set use_ERCC to FALSE")
     use_ERCC = FALSE  
@@ -32,7 +32,7 @@ fitTechnicalNoise <- function(nCountsEndo,nCountsERCC=NULL,
         if("quan" %in% names(fit_opts)){quan = fit_opts$quan}else{quan=0.8}
       }else{
         mincv2 = 0.3
-        quan=0.8
+        quan = 0.8
       }
       
       #normalised counts (with size factor)
@@ -188,7 +188,8 @@ fitTechnicalNoise <- function(nCountsEndo,nCountsERCC=NULL,
       res$fit = fit_loglin
       res$techNoiseLog = LogVar_techEndo_logfit
       
-    }else{
+    }
+    if(fit_type=='counts'){
       meansEndo <- rowMeans( nCountsEndo )
       varsEndo <- rowVars( nCountsEndo )
       cv2Endo <- varsEndo / meansEndo^2
@@ -216,8 +217,7 @@ fitTechnicalNoise <- function(nCountsEndo,nCountsERCC=NULL,
       LogVar_techEndo=(dLogNcountsEndo*sqrt(var_techEndo))^2 #error propagation 
       
       if(plot==TRUE){
-        #plot fit
-        
+        #plot fit        
         plot( meansEndo, cv2Endo, log="xy", col=1+2*useForFitA, xlab = 'Means', ylab = 'CV2')
         xg <- 10^seq( -3, 5, length.out=100 )
         lines( xg, coefficients(fitA)["a0"] + coefficients(fitA)["a1tilde"]/xg, col='blue' )
@@ -230,28 +230,84 @@ fitTechnicalNoise <- function(nCountsEndo,nCountsERCC=NULL,
       
       
     }
+    if(fit_type=='logvar'){
+      LCountsEndo <- log10(nCountsEndo+1)
+      LmeansEndo <- rowMeans( LCountsEndo )
+      LvarsEndo <- rowVars( LCountsEndo )
+      Lcv2Endo <- LvarsEndo / LmeansEndo^2
+      
+      
+      
+      if("span" %in% names(fit_opts)){span = fit_opts$span}else{span=0.8}
+      if("minmean" %in% names(fit_opts)){minmean = fit_opts$minmean}else{minmean=0.5}
+      
+      useForFitA <- LmeansEndo >= minmean
+      fit_var2 = loess(LvarsEndo[useForFitA] ~ LmeansEndo[useForFitA], span=span, control=loess.control(surface="direct"))
+      xg <- seq( 0, 5.5, length.out=100 )
+      Var_techEndo_logfit_loess <-  predict(fit_var2, xg)
+      
+      minVar_ERCC = min(LvarsEndo[LmeansEndo>3])
+      
+      if(any(xg>3 & (Var_techEndo_logfit_loess<0.6*minVar_ERCC))){
+        idx_1 = which(xg>3 & (Var_techEndo_logfit_loess<0.6*minVar_ERCC))[1]
+        idx_end = length(Var_techEndo_logfit_loess)
+        Var_techEndo_logfit_loess[idx_1:idx_end] = 0.6*minVar_ERCC        
+      }
+      
+      if(plot==TRUE){
+        plot( LmeansEndo, LvarsEndo, col=1,ylim=c(1e-3,150.5),log="y",xlab='meansLogEndo',ylab='VarLogEndo')
+        lines(xg, Var_techEndo_logfit_loess,lwd=3,col='blue',lty=1)  
+        legend('topright',c('Endo. genes', 'Tech. noise fit'),pch=c(1,NA), lty = c(NA,1),col=c('black', 'blue'))
+      }
+      
+      #use model for endogenous genes
+      xg=LmeansEndo
+      Var_techEndo_logfit_loess <-  predict(fit_var2, xg)      
+      
+      if(any(xg>3 & Var_techEndo_logfit_loess<0.6*minVar_ERCC)){
+        idx_1 = which(xg>3 & Var_techEndo_logfit_loess<0.6*minVar_ERCC)[1]
+        idx_end = length(Var_techEndo_logfit_loess)
+        Var_techEndo_logfit_loess[idx_1:idx_end] = 0.6*minVar_ERCC       
+      }          
+      
+      res = list()
+      res$fit = fit_var2
+      res$techNoiseLog = Var_techEndo_logfit_loess
+      
+    }
+    
   }
   res    
 }
 
 
 
-getVariableGenes <- function(nCountsEndo, fit, method = "fit", threshold = 0.1, fit_type=NULL,sfEndo=NULL, sfERCC=NULL){
+getVariableGenes <- function(nCountsEndo, fit, method = "fit", threshold = 0.1, fit_type=NULL,sfEndo=NULL, sfERCC=NULL, plot=T){
   if(!(method %in% c("fdr","fit"))){
     stop("'method' needs to be either 'fdr' or 'fit'")
   }
+  
+  
   if(is.null(fit_type)){
-    print("No 'fit_type' specified. Trying to guess it from parameter names")
+    print("No 'fit_type' specified. Trying to guess its from parameter names")
     if("a0" %in% names(coefficients(fit)) & "a1tilde" %in% names(coefficients(fit))){fit_type="counts"}else{
       if("a" %in% names(coefficients(fit)) & "k" %in% names(coefficients(fit))){fit_type="log"}else{
-        if(is.call(techNoiseLog$fit$call)){fit_type="logvar"}    
+        if(is.call(fit$call)){fit_type="logvar"}    
       }
     }
-    print(paste("Assuming 'fit_type' was ","'",fit_type,"'",sep=""))
+    print(paste("Assuming 'fit_type' is ","'",fit_type,"'",sep=""))
   }
   
-  if(is.null(fit_type)){stop("Couldn't guess fit_type. Please specify it or run getTechincalNoise 
+  
+  if(is.null(fit_type)){stop("Couldn't guess fit_type. Please specify it or run the getTechincalNoise 
                            function to obtain the fit")}
+  
+  
+  if(!(fit_type %in% c("counts","log", "logvar")) & !is.null(fit_type)){
+    stop("'fit_type' needs to be either 'fdr' or 'fit'")
+  }
+  
+  
   if(method=='fdr' & fit_type!="counts"){stop("method='fdr', can only be used with fit_type 'counts'")}
   if(method=='fdr' & (is.null(sfERCC) | is.null(sfEndo))){stop("Please specify sfERCC and sfEndo when using method='fdr'")}
   
@@ -259,8 +315,11 @@ getVariableGenes <- function(nCountsEndo, fit, method = "fit", threshold = 0.1, 
   if(method=='fdr'){
     meansEndo <- rowMeans( nCountsEndo )
     varsEndo <- rowVars( nCountsEndo )
-    cv2Endo <- varsEndo/meansEndo^2
+    cv2Endo <- varsEndo / meansEndo^2
+
+      
     
+
     minBiolDisp <- .5^2
     xi <- mean( 1 / sfERCC )
     m <- ncol(nCountsEndo)
@@ -268,10 +327,19 @@ getVariableGenes <- function(nCountsEndo, fit, method = "fit", threshold = 0.1, 
       ( coefficients(fit)["a1tilde"] - xi ) * mean( sfERCC / sfEndo )
     cv2thA <- coefficients(fit)["a0"] + minBiolDisp + coefficients(fit)["a0"] * minBiolDisp
     testDenomA <- ( meansEndo * psia1thetaA + meansEndo^2 * cv2thA ) / ( 1 + cv2thA/m )
+    
     pA <- 1 - pchisq( varsEndo * (m-1) / testDenomA, m-1 )
     padjA <- p.adjust( pA, "BH" )
+   print( table( padjA < .1 ))
     is_het =  padjA < threshold
     is_het[is.na(is_het)] = FALSE
+    
+    if(plot==TRUE){
+      plot( meansEndo, cv2Endo, log="xy", col=1+is_het,ylim=c(0.1,95), xlab='Mean Counts', ylab='CV2 Counts')
+      xg <- 10^seq( -3, 5, length.out=100 )
+      lines( xg, coefficients(fit)[1] + coefficients(fit)[2]/xg,lwd=2,col='green' )      
+      legend('bottomright',c('Endo. genes','Var. genes',"Fit"),pch=c(1,1,NA),lty = c(NA,NA,1),col=c('black','red', 'green'),cex=0.7)   
+    }
     
   }
   if(method=='fit' & fit_type=='log'){
@@ -279,6 +347,15 @@ getVariableGenes <- function(nCountsEndo, fit, method = "fit", threshold = 0.1, 
     LmeansEndo <- rowMeans( LCountsEndo )
     Lcv2Endo = rowVars(LCountsEndo)/LmeansEndo^2
     is_het = (coefficients(fit)["a"] *10^(-coefficients(fit)["k"]*LmeansEndo) < Lcv2Endo) &  LmeansEndo>0.3  
+    
+    if(plot==TRUE){
+      plot( LmeansEndo, Lcv2Endo, log="y", col=1+is_het,ylim=c(1e-3,1e2),xlab='meansLogEndo',ylab='cv2LogEndo')
+      xg <- seq( 0, 5.5, length.out=100 )
+      lines( xg, coefficients(fit)[1] *10^(-coefficients(fit)[2]*xg ),lwd=2,col='green' )
+      legend('bottomright',c('Endo. genes','Var. genes',"Fit"),pch=c(1,1,NA),lty = c(NA,NA,1),col=c('black','red', 'blue'),cex=0.7)   
+      
+    }
+    
   }
   
   if(method=='fit' & fit_type=='counts'){
@@ -286,15 +363,77 @@ getVariableGenes <- function(nCountsEndo, fit, method = "fit", threshold = 0.1, 
     varsEndo <- rowVars( nCountsEndo )
     cv2Endo <- varsEndo/meansEndo^2
     is_het = (coefficients(fit)[[1]] + coefficients(fit)[[2]]/meansEndo) < cv2Endo &  meansEndo>2
+    
+    if(plot==TRUE){
+      plot( meansEndo, cv2Endo, log="xy", col=1+is_het,ylim=c(0.1,95), xlab='Mean Counts', ylab='CV2 Counts')
+      xg <- 10^seq( -3, 5, length.out=100 )
+      lines( xg, coefficients(fit)[1] + coefficients(fit)[2]/xg,lwd=2,col='green' )      
+      legend('bottomright',c('Endo. genes','Var. genes',"Fit"),pch=c(1,1,NA),lty = c(NA,NA,1),col=c('black','red', 'green'),cex=0.7)   
+    }
+    
+    
   }
   
   if(method=='fit' & fit_type=='logvar'){
     LCountsEndo <- log10(nCountsEndo+1)
     LmeansEndo <- rowMeans( LCountsEndo )
     LVarsEndo <- rowVars( LCountsEndo )
-    is_het = predict(fit, LmeansEndo) < LVarsEndo &  LmeansEndo>0.3
+    
+    xg = LmeansEndo
+    
+    Var_techEndo_logfit_loess =  predict(fit, LmeansEndo)
+    
+    minVar_Endo = min(LVarsEndo[LmeansEndo>3])
+    
+    if(any(xg>3 & Var_techEndo_logfit_loess<0.6*minVar_Endo)){
+      idx = which(xg>3 & Var_techEndo_logfit_loess<0.6*minVar_Endo)
+      Var_techEndo_logfit_loess[idx] = 0.6*minVar_Endo       
+    }      
+    
+    is_het = (Var_techEndo_logfit_loess < LVarsEndo) &  LmeansEndo>0.3
+    print(sum(is_het))
+    
+    
+    if(plot==TRUE){
+      plot( LmeansEndo, LVarsEndo, log="y", col=1+is_het,,xlab='meansLogEndo',ylab='varsLogEndo')
+      xg <- seq( 0, 5.5, length.out=100 )
+      Var_techEndo_logfit_loess =  predict(fit, xg)
+      if(any(xg>3 & Var_techEndo_logfit_loess<0.6*minVar_Endo)){
+        idx_1 = which(xg>3 & Var_techEndo_logfit_loess<0.6*minVar_Endo)[1]
+        idx_end = length(Var_techEndo_logfit_loess)
+        Var_techEndo_logfit_loess[idx_1:idx_end] = 0.6*minVar_Endo       
+      }      
+      
+      lines( xg, Var_techEndo_logfit_loess,lwd=2,col='green' )
+      legend('bottomright',c('Endo. genes','Var. genes',"Fit"),pch=c(1,1,NA),lty = c(NA,NA,1),col=c('black','red', 'green'),cex=0.7)   
+      
+      #print("Plotting not available for this method")}
+    }
+
   }
   
   is_het
 }
+
+
+getEnsemble <- function(term, species = 'mMus'){
+  if(!(species %in%c('mMus','Hs'))){stop("'species' needs to be either 'mMus' or 'Hs'")}
+  require(AnnotationDbi)
+  
+  if(species=='mMus'){
+    require(org.Mm.eg.db)
+  xxGO <- as.list(org.Mm.egGO2EG)}else{
+    require(org.Hs.eg.db)
+  xxGO <- as.list(org.Hs.egGO2EG)  
+  }
+  cell_cycleEG <-unlist(xxGO[term])
+  #get ENSEMBLE ids
+  x <- org.Mm.egENSEMBL
+  mapped_genes <- mappedkeys(x)
+  xxE <- as.list(x[mapped_genes])
+  ens_ids_cc<-unlist(xxE[cell_cycleEG])  
+  
+  ens_ids_cc
+}
+
 
