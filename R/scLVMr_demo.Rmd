@@ -1,7 +1,6 @@
 ---
 title: "An R interface for scLVM"
 author: "Florian Buettner,  F. Paolo Casale and Oliver Stegle"
-#date: "7. Oktober 2014"
 output: html_document
 ---
 
@@ -16,7 +15,7 @@ library(DESeq2)
 library(statmod)
 library(rPython)
 library(ggplot2)
-
+library(gplots)
 #load the wrapper functions
 source('./R2py.R')
 source('./scLVM.R')
@@ -27,7 +26,7 @@ python.load('init_data.py') #please adapt the base path of limix and sclvm here
 
 Now, we load two data frames containing, one containing a list of cell cycle genes annotated in Cyclebase, the other one containing mapped read counts for the 81 T-cells described in the paper.
 ```{r}
-load('./data_Tcells.Rdata')
+load('data_Tcells.Rdata')
 
 ```
 
@@ -253,13 +252,6 @@ pca = prcomp(Y,2)
 d <- qplot(pca$x[,1], pca$x[,2],colour=Y[,idx_Gata3], xlab = 'PC1', ylab = 'PC2')
 d + ggtitle('PCA uncorrected gene expression') + scale_color_continuous(name ="Gata3")
 
-pca = prcomp(Y,2)
-d <- qplot(pca$x[,1], pca$x[,2],colour=cell_cycle_phase, xlab = 'PC1', ylab = 'PC2')
-d + ggtitle('PCA uncorrected gene expression') + scale_color_continuous(name ="Gata3")
-
-
-library(tsne)
-Xtsne = tsne(Ycorr)
 
 
 ```
