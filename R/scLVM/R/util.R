@@ -248,8 +248,8 @@ fitTechnicalNoise <- function(nCountsEndo,nCountsERCC=NULL,
       
       minVar_ERCC = min(LvarsEndo[LmeansEndo>3])
       
-      if(any(xg>3 & (Var_techEndo_logfit_loess<0.6*minVar_ERCC))){
-        idx_1 = which(xg>3 & (Var_techEndo_logfit_loess<0.6*minVar_ERCC))[1]
+      if(any(xg>2.5 & (Var_techEndo_logfit_loess<0.6*minVar_ERCC))){
+        idx_1 = which(xg>2.5 & (Var_techEndo_logfit_loess<0.6*minVar_ERCC))[1]
         idx_end = length(Var_techEndo_logfit_loess)
         Var_techEndo_logfit_loess[idx_1:idx_end] = 0.6*minVar_ERCC        
       }
@@ -264,8 +264,8 @@ fitTechnicalNoise <- function(nCountsEndo,nCountsERCC=NULL,
       xg=LmeansEndo
       Var_techEndo_logfit_loess <-  predict(fit_var2, xg)      
       
-      if(any(xg>3 & Var_techEndo_logfit_loess<0.6*minVar_ERCC)){
-        idx_1 = which(xg>3 & Var_techEndo_logfit_loess<0.6*minVar_ERCC)[1]
+      if(any(xg>2.5 & Var_techEndo_logfit_loess<0.6*minVar_ERCC)){
+        idx_1 = which(xg>2.5 & Var_techEndo_logfit_loess<0.6*minVar_ERCC)[1]
         idx_end = length(Var_techEndo_logfit_loess)
         Var_techEndo_logfit_loess[idx_1:idx_end] = 0.6*minVar_ERCC       
       }          
@@ -383,10 +383,10 @@ getVariableGenes <- function(nCountsEndo, fit, method = "fit", threshold = 0.1, 
     
     Var_techEndo_logfit_loess =  predict(fit, LmeansEndo)
     
-    minVar_Endo = min(LVarsEndo[LmeansEndo>3])
+    minVar_Endo = min(LVarsEndo[LmeansEndo>2.5])
     
-    if(any(xg>3 & Var_techEndo_logfit_loess<0.6*minVar_Endo)){
-      idx = which(xg>3 & Var_techEndo_logfit_loess<0.6*minVar_Endo)
+    if(any(xg>2.5 & Var_techEndo_logfit_loess<0.6*minVar_Endo)){
+      idx = which(xg>2.5 & Var_techEndo_logfit_loess<0.6*minVar_Endo)
       Var_techEndo_logfit_loess[idx] = 0.6*minVar_Endo       
     }      
     
@@ -398,8 +398,8 @@ getVariableGenes <- function(nCountsEndo, fit, method = "fit", threshold = 0.1, 
       plot( LmeansEndo, LVarsEndo, log="y", col=1+is_het,,xlab='meansLogEndo',ylab='varsLogEndo')
       xg <- seq( 0, 5.5, length.out=100 )
       Var_techEndo_logfit_loess =  predict(fit, xg)
-      if(any(xg>3 & Var_techEndo_logfit_loess<0.6*minVar_Endo)){
-        idx_1 = which(xg>3 & Var_techEndo_logfit_loess<0.6*minVar_Endo)[1]
+      if(any(xg>2.5 & Var_techEndo_logfit_loess<0.6*minVar_Endo)){
+        idx_1 = which(xg>2.5 & Var_techEndo_logfit_loess<0.6*minVar_Endo)[1]
         idx_end = length(Var_techEndo_logfit_loess)
         Var_techEndo_logfit_loess[idx_1:idx_end] = 0.6*minVar_Endo       
       }      
@@ -416,15 +416,19 @@ getVariableGenes <- function(nCountsEndo, fit, method = "fit", threshold = 0.1, 
 }
 
 
-getEnsemble <- function(term, species = 'mMus'){
+getEnsembl <- function(term, species = 'mMus'){
   if(!(species %in%c('mMus','Hs'))){stop("'species' needs to be either 'mMus' or 'Hs'")}
-  require(AnnotationDbi)
   
   if(species=='mMus'){
-    require(org.Mm.eg.db)
-  xxGO <- as.list(org.Mm.egGO2EG)}else{
-    require(org.Hs.eg.db)
-  xxGO <- as.list(org.Hs.egGO2EG)  
+    if(require(org.Mm.eg.db)){
+    xxGO <- AnnotationDbi::as.list(org.Mm.egGO2EG)}else{
+      stop("Install org.Mm.eg.db package for retrieving gene lists from GO")
+    }
+  }else{
+    if(require(org.Hs.eg.db)){
+  xxGO <- AnnotationDbi::as.list(org.Hs.egGO2EG)}else{
+    stop("Install org.Hs.eg.db package for retrieving gene lists from GO")
+  }
   }
   cell_cycleEG <-unlist(xxGO[term])
   #get ENSEMBLE ids
@@ -437,3 +441,61 @@ getEnsemble <- function(term, species = 'mMus'){
 }
 
 
+getSymbols <- function(ensIds, species = 'mMus'){
+  if(!(species %in%c('mMus','Hs'))){stop("'species' needs to be either 'mMus' or 'Hs'")}
+  
+  if(species=='mMus'){
+    require(org.Mm.eg.db)
+  x <- org.Mm.egSYMBOL
+  xxenseg <- AnnotationDbi::as.list(org.Mm.egENSEMBL2EG)}else{
+    require(org.Hs.eg.db)
+    x <- org.Hs.egSYMBOL
+    xxenseg <- AnnotationDbi::as.list(org.Hs.egENSEMBL2EG)        
+  }
+  # Get the gene symbol that are mapped to an entrez gene identifiers
+  gene_names = ensIds
+  
+  mapped_genes <- mappedkeys(x)
+  # Convert to a list
+  xx <- as.list(x[mapped_genes])  
+  gene_syms=unlist(xx[unlist(xxenseg[gene_names])])
+  gene_names_list<-(lapply(xxenseg[gene_names],function(x){if(is.null(x)){x=NA}else{x=x[1]}}))
+  sym_names=unlist(lapply(xx[unlist(gene_names_list)],function(x){if(is.null(x)){x=NA}else{x=x[1]}}))
+  sym_names[is.na(sym_names)]=gene_names[is.na(sym_names)]
+  
+  sym_names
+}
+
+## Function for arranging ggplots
+## Code adapted from Stephen Turner: https://gist.github.com/stephenturner/3724991#file-arrange_ggplot2-r
+
+vp.layout <- function(x, y) viewport(layout.pos.row=x, layout.pos.col=y)
+arrange_ggplot2 <- function(..., nrow=NULL, ncol=NULL, as.table=FALSE) {
+  require(grid)
+  dots <- list(...)
+  n <- length(dots)
+  if(is.null(nrow) & is.null(ncol)) { nrow = floor(n/2) ; ncol = ceiling(n/nrow)}
+  if(is.null(nrow)) { nrow = ceiling(n/ncol)}
+  if(is.null(ncol)) { ncol = ceiling(n/nrow)}
+
+  grid.newpage()
+  pushViewport(viewport(layout=grid.layout(nrow,ncol) ) )
+  ii.p <- 1
+  for(ii.row in seq(1, nrow)){
+    ii.table.row <- ii.row	
+    if(as.table) {ii.table.row <- nrow - ii.table.row + 1}
+    for(ii.col in seq(1, ncol)){
+      ii.table <- ii.p
+      if(ii.p > n) break
+      print(dots[[ii.table]], vp=vp.layout(ii.table.row, ii.col))
+      ii.p <- ii.p + 1
+    }
+  }
+}
+
+
+configLimix <- function(limix_path){
+  python.assign('limix_path', limix_path)
+  python.exec("sys.path.append(limix_path)")
+  python.load(system.file("py","init_data.py",package="scLVM"))  
+}

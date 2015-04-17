@@ -1,0 +1,239 @@
+---
+title: "An R interface for scLVM"
+author: "Florian Buettner,  F. Paolo Casale and Oliver Stegle"
+#date: "7. Oktober 2014"
+output: html_document
+---
+
+1 Data preparation and pre-processing
+---
+In order to run scLVM in python as outlined in the demo notebook, it is necessary to pre-process the data. In the following exmaple script we illustrate how this pre-processing was performed for the T-cell data.
+First, we need to load some required packages.
+
+```{r,message=FALSE}
+library(genefilter)
+library(statmod)
+require(ggplot2)
+library(gplots)
+require(DESeq2)
+library(scLVM)
+
+
+```
+
+Now, we load two data frames containing, one containing a list of cell cycle genes annotated in Cyclebase, the other one containing mapped read counts for the 81 T-cells described in the paper.
+```{r}
+#load(system.file("extdata","data_Tcells.Rdata",package = "scLVM"))
+data(data_Tcells)
+Th2_genes = as.character(unlist(read.table(system.file("extdata","Th2_markers.txt",package = "scLVM"))))
+```
+
+Next, we look for the spike-ins which we then use to normalise the data. We omitted the normalization for cell size as proposed in Brennecke et al. 2013, because the computational correction by scLVM yielded much better results . This is likely explained by noting that cell size and cell cycle are correlated, thus the normalization proposed by Brennecke et al. reduces the amount of information available for inferring cell-cell correlations due to cell cycle.
+
+```{r}
+dataMouse[ 1:5, 1:4 ]
+
+geneTypes <- factor( c( ENSM="ENSM", ERCC="ERCC" )[
+  substr( rownames(dataMouse), 1, 4 ) ] )
+
+#2. calculate normalisation for counts
+countsMmus <- dataMouse[ which( geneTypes=="ENSM" ), ]
+countsERCC <- dataMouse[ which( geneTypes=="ERCC" ), ]
+lengthsMmus <- dataMouse[ which( geneTypes=="ENSM" ), 1 ]
+lengthsERCC <- dataMouse[ which( geneTypes=="ERCC" ), 1 ]
+
+
+sfERCC <- estimateSizeFactorsForMatrix( countsERCC )
+sfMmus <- sfERCC #also use ERCC size factor for endogenous genes
+
+
+#normalise read counts
+nCountsERCC <- t( t(countsERCC) / sfERCC )
+nCountsMmus <- t( t(countsMmus) / sfERCC )
+
+```
+
+Using the normalised read counts and the ERCC spike-ins, we can estimate the technical noise by fitting the relationship between mean and squared coefficient of variation (CV2) following Brennecke et al.
+
+```{r}
+#get technical noise
+techNoise = fitTechnicalNoise(nCountsMmus,nCountsERCC=nCountsERCC, fit_type = 'counts')  
+
+```
+
+
+Once we have completed the fitting process, we can call variable genes and rename a few variables.
+
+```{r}
+#call variable genes
+is_het = getVariableGenes(nCountsMmus, techNoise$fit, method = "fdr", 
+                          threshold = 0.1, fit_type="counts",sfEndo=sfMmus, sfERCC=sfERCC)
+table(is_het)
+
+#rename a few variables
+Y = t(log10(nCountsMmus+1)) #normalised read counts
+genes_het_bool = as.vector(is_het) #variable genes
+geneID = rownames(nCountsMmus) #gene IDs
+tech_noise = as.vector(techNoise$techNoiseLog) #technical noise
+
+``` 
+
+### Fitting latent factors
+
+In 'vanilla' scLVM we implicitly assume that cell cycle is the major driver of heterogeneity; that's why we can simply capture cell-cycle effects by fiiting a GPLVM on the cell cycle genes. However, in many applications, either cell cycle is not the dominant source of variation (e.g. imagine a time-course experiment where pluripotnet cells are differentiated towards a specific lineage - here, most of the observed variablity may be induced by differentiation) and/or there are several factors of interest driving the observed heterogeneity (e.g. in the T-cell data cell-cycle is the major  driver of hetergeneity, but differentation processes are also playing an important role). 
+In both cases, we would like a framework where we condition on the dominant factor (cell cycle for the T-cell experients or facotrs reflecting the experimental desing in more complex experiments). Otherwise the 2nd, minor factor, may also reflect to some extent the dominant process.
+
+Here, we illustrate with the T-cell data how this conditioning can be perfromed using scLVM.  We assume that cell cycle is the dominant factor and fit it without conditioning as before. Next, we fit a Th2 factor based on 122 Th2 signature genes by conditioning on the cell cycle factors. Therefore, we use the gpCLVM class which is part of the scLVM package.
+
+First, let's fit the cell-cycle factor:
+
+```{r}
+#get cell cycle genes from GO 
+ens_ids_cc <- getEnsemble('GO:0007049')
+idx_cellcyclegenes <- na.omit(match(ens_ids_cc, geneID))
+idx_cell_cycle_noise_filtered = intersect(which(colMeans(Y)>0),idx_cellcyclegenes)
+
+#construct scLVM object
+sclvm = scLVM(Y=Y)
+gplvm = fitGPLVM(sclvm,idx=idx_cell_cycle_noise_filtered,k=1,out_dir='./cache',file_name='Kcc.h5f',recalc=TRUE, use_ard=FALSE)
+
+#Get cell-cycle 
+Kcc = gplvm$K
+Xcc = gplvm$X
+
+```
+
+After having fit the cell-cycle factor, we can now fit the Th2 factor by conditioning on the the dominant cell-cycle factor. As we might expect interactions between cell cycle and differentiation, we can also fit an interaction term.
+
+```{r}
+#get Th2 marker genes 
+gene_symbols = getSymbols(rownames(dataMouse))
+idx_Th2 <- na.omit(match(Th2_genes, gene_symbols))
+
+
+#run gpCLVM
+cgp = gpCLVM(Y=Y[,idx_Th2],X0=Xcc,k=1, interaction=TRUE)
+cgp = optimize(cgp)
+KTh2 = getK(cgp) # matrix from inferred inferred factor
+Kint = getKi(cgp) # interaction matrix
+```
+
+
+
+Next, we plot the inferred cell-cell covarince matrices.
+
+```{r}
+#Plot inferred similarity matrix
+par(mfrow = c(1,3))
+image(Kcc,xaxt = "n", yaxt = "n", col = )
+title('Similarity matrix based on cell cycle')
+
+image(KTh2,xaxt = "n", yaxt = "n", col = )
+title('Similarity matrix based on Th2 factor')
+
+image(Kint,xaxt = "n", yaxt = "n", col = )
+title('Interaction similarity matrix')
+
+```
+
+---
+Stage 2: Variance decomposition and cell-cycle corection
+---
+
+We first perfrom a variance decomposition on the variable genes.
+
+```{r}
+# considers only heterogeneous genes
+Ihet = which(genes_het_bool==1)
+Y    = Y[,Ihet]
+tech_noise = tech_noise[Ihet]
+geneID = geneID[Ihet]
+
+#new instance of sclvm with heterogeneous genes only
+sclvm = scLVM(Y=Y,geneID=geneID,tech_noise=tech_noise)
+```
+
+The computation time for the next step can be substantial. If large datasets are considerd, it may be advisable to distribute these calculations on a high performance compute cluster. In this case i0 and i1 determine the range of genes for wich this anlaysis is performed. Here, we fit the model on 100 genes.
+
+```{r}
+i0 = 1    # gene from which the analysis starts
+i1 = dim(Y)[2]   # gene at which the analysis ends
+
+
+
+# fit the model from i0 to i1
+sclvm = varianceDecomposition(sclvm,K=list(Kcc,KTh2 , Kint),i0=i0,i1=i1)
+```
+
+Once the contribution of cell cycle to the observed variance is estimated, cell-cycled corrected gene expression levels can be obtained. Variance components are normalised such that they sum uo to 1 and genes for which the variance decompostion has not convered are filtered out.
+
+```{r}
+
+# get variance components
+results_var = getVarianceComponents(sclvm)
+var_filtered = results_var$var[results_var$conv,] # filter out genes for which vd has not converged
+head(var_filtered)
+
+# get corrected expression levels
+Ycorr = getCorrectedExpression(sclvm)
+dim(Ycorr)
+
+```
+
+After having perfromed the variance decompostion we can illustrate the contributions of the indiviudal components.
+
+```{r}
+var_mean = apply(var_filtered,2,mean)
+colors = c('Green','Blue','Gray', 'yellow')
+pie(var_mean)
+```
+
+---
+Correlation Analysis
+---
+In order to estimate pairwise correlation coefficients whilst controlling for hidden factors such as the cell cycle, we fit a linear mixed model with a fixed effect representing the contribution of another gene j and random effects representing the contribution of the cell cycle and biological variation.
+Again, as computaion times can be very long we allow the computations to be split up over several calculations for subsets of genes.
+
+```{r}
+i0 = 1     # gene from which the analysis starts
+i1 = 5    # gene at which the analysis ends
+
+# fit lmm without correction
+res_nocorr = fitLMM(sclvm, K=NULL,i0=i0,i1=i1,verbose=TRUE, geneID = geneID)
+
+# fit lmm with correction
+K=list(Kcc,KTh2 , Kint)
+res_corr = fitLMM(sclvm, K=K,i0=i0,i1=i1,verbose=TRUE, geneID = geneID)
+
+```
+
+Finally we can have a quick look at the difference between corrected and uncorrected correlations.
+
+```{r}
+
+heatmap.2(res_nocorr$beta[,i0:i1], Rowv = NULL, Colv = NULL, dendrogram = "none",
+          labCol = as.character(seq(i0:i1)), labRow = as.character(seq(i0:i1)),srtCol = 0, key=T,density.info = "none",
+          trace="none", breaks=seq.int(from = -0.6, to = 1.0, length.out = 13), main = 'Without Correction')
+
+heatmap.2(res_corr$beta[,i0:i1], Rowv = NULL, Colv = NULL, dendrogram = "none",
+          labCol = as.character(seq(i0:i1)), labRow = as.character(seq(i0:i1)),srtCol = 0, key=T,density.info = "none",
+          trace="none", breaks=seq.int(from = -0.6, to = 1.0, length.out = 13), main = 'With Correction')
+```
+
+Finally, let's make a standard PCA on the corrected and uncorrected data. If you would like to use non-linear PCA as in our paper, we suggest you use the python implementation as illustrated in our ipython notebook. You can see that as we have now regressed out not only the cell cycle effects, but also Th2 effects, very little structure is left.
+
+```{r}
+idx_Gata3 = which(geneID=='ENSMUSG00000015619')
+
+#PCA on cell cycle corrected gene expression data
+pcaCorr = prcomp(Ycorr,2)
+d <- qplot(pcaCorr$x[,1], pcaCorr$x[,2],colour=Ycorr[,idx_Gata3], xlab = 'PC1', ylab = 'PC2')
+d + ggtitle('PCA corrected gene expression') + scale_color_continuous(name ="Gata3")
+
+#PCA on uncorrected data
+pca = prcomp(Y,2)
+d <- qplot(pca$x[,1], pca$x[,2],colour=Y[,idx_Gata3], xlab = 'PC1', ylab = 'PC2')
+d + ggtitle('PCA uncorrected gene expression') + scale_color_continuous(name ="Gata3")
+
+
+```

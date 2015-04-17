@@ -1,5 +1,5 @@
 scLVM_py = function(Y=NULL,geneID=NULL,tech_noise=NULL){
-
+  
   row.names(Y)=c() #strip Y of column and row names
   colnames(Y)=c()
   python.assign("Y",Y) #outfile is the hdf file generated in the previous setting
@@ -31,9 +31,16 @@ fitGPLVM_py = function(idx=NULL,k=1,standardize=FALSE,out_dir='./cache',file_nam
     res$X_ard = X_ard
   }
   
-  python.exec("X = X.tolist()")
-  X =  python.get("X")    
-  res$X = X
+  if(k>1){
+    python.exec("X = X.tolist()")
+    X = do.call(rbind,python.get("X"))
+    res$X = X
+    
+  }else{
+    python.exec("X = X.tolist()")
+    X =  python.get("X")    
+    res$X = X
+  }
   
   python.exec("Kcc = Kcc_ARD.tolist()")
   Kcc = do.call(rbind,python.get("Kcc"))
@@ -43,11 +50,23 @@ fitGPLVM_py = function(idx=NULL,k=1,standardize=FALSE,out_dir='./cache',file_nam
 }
 
 varianceDecomposition_py = function(K=NULL,i0=1,i1=1){
-  K = as.matrix(K)
-  row.names(K)=c() #strip Y of column and row names
-  colnames(K)=c()
-  python.assign("K",K)
-  python.exec("K = SP.array(K)") 
+  
+  if(is.matrix(K)){
+    K = as.matrix(K)
+    row.names(K)=c() #strip Y of column and row names
+    colnames(K)=c()
+    python.assign("K",K)
+    python.exec("K = SP.array(K)")   
+  }else{
+    python.exec("K = []")
+    for(i in 1:length(K)){
+      K_ = as.matrix(K[[i]])
+      row.names(K_)=c() #strip Y of column and row names
+      colnames(K_)=c()
+      python.assign("K_",K_) 
+      python.exec("K.append(SP.array(K_))")      
+    }        
+  }
   
   python.assign("i0", as.integer(i0-1))
   python.assign("i1", as.integer(i1))
@@ -73,20 +92,38 @@ getVarianceComponents_py = function(normalize=normalize){
 }
 
 
-getCorrectedExpression_py = function(){
-  python.exec("Ycorr = sclvm.getCorrectedExpression()")
+getCorrectedExpression_py = function(rand_eff_ids=NULL){
+  if(!is.null(rand_eff_ids))rand_eff_ids = rand_eff_ids-1
+  python.assign("rand_eff_ids", rand_eff_ids)
+  python.exec("Ycorr = sclvm.getCorrectedExpression(rand_eff_ids)")
   Ycorr = do.call(rbind, python.get("Ycorr.tolist()"))
   colnames(Ycorr) <- python.get("geneID_vd")
   return(Ycorr)
 }
 
 fitLMM_py <- function(K=NULL,i0=i0,i1=i1,verbose=TRUE, geneID=NULL){
-
+  
   python.assign("i0", as.integer(i0-1))
   python.assign("i1", as.integer(i1))
   python.assign("verbose", verbose)
-  python.assign("K",K)
-  if(!is.null(K))python.exec("K = SP.array(K)") 
+  if(!is.null(K)){
+    if(is.matrix(K)){
+      K = as.matrix(K)
+      row.names(K)=c() #strip Y of column and row names
+      colnames(K)=c()
+      python.assign("K",K)
+      python.exec("K = SP.array(K)")   
+    }else{
+      python.exec("K = []")
+      for(i in 1:length(K)){
+        K_ = as.matrix(K[[i]])
+        row.names(K_)=c() #strip Y of column and row names
+        colnames(K_)=c()
+        python.assign("K_",K_) 
+        python.exec("K.append(SP.array(K_))")      
+      }        
+    }
+  }
   
   python.exec("pv,beta,info = sclvm.fitLMM(K=K,i0=i0,i1=i1,verbose=verbose)")
   python.exec("beta[SP.where(SP.isnan(beta))]=0")#nans can happen for K=None and they are trouble in JSON
@@ -105,4 +142,59 @@ fitLMM_py <- function(K=NULL,i0=i0,i1=i1,verbose=TRUE, geneID=NULL){
   res$pv = pv
   res$gene_idx = gene_idx_row
   return(res)
+}
+
+
+
+#####gpCLVM#####
+
+gpCLVM_py = function(Y=NULL,X0=NULL,k=1,standardize=FALSE,interaction=TRUE){
+  
+  row.names(Y)=c() #strip Y of column and row names
+  colnames(Y)=c()
+  python.assign("Y",Y) #outfile is the hdf file generated in the previous setting
+  python.exec("Y = SP.array(Y)") #matrices are passed as lists and need to be converted back to mtrices
+  python.assign("X0",X0)
+  if(!is.null(X0)){
+    python.exec("X0 = SP.array(X0)")}
+  if(is.null(dim(X0))){
+    python.exec("X0 = SP.reshape(X0,(len(X0),1))")}
+  python.assign("k",as.integer(k))
+  python.assign("standardize",standardize)
+  python.assign("interaction",interaction)
+  
+  python.exec("gp = gpCLVM(Y=Y,X0=X0,k=k,standardize=standardize,interaction=interaction)")
+  
+}
+
+
+
+optimize_py = function(obj){
+  python.exec("params0 = gp.initParams()")
+  python.exec("conv = gp.optimize(params0)")
+  python.exec("X1 = gp.getX()")
+  python.exec("K1 = gp.getK()")
+  
+  
+  res=list()
+  python.exec("X1 = X1.tolist()")
+  X =  do.call(rbind,python.get("X1"))
+  res$X = X
+  
+  python.exec("K1 = K1.tolist()")
+  K = do.call(rbind,python.get("K1"))
+  res$K = K
+  
+  if(obj@interaction==TRUE){
+    python.exec("Ki = gp.getKi()")
+    python.exec("Ki = Ki.tolist()")
+    Ki = do.call(rbind,python.get("Ki"))
+    res$Ki = Ki
+  }
+  
+  #python.exec("var = gpCLVM.getVarianceComps()")
+  #res$var = var
+  #var = do.call(rbind,python.get("var.tolist()"))
+  
+  res
 }

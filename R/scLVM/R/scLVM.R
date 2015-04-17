@@ -19,7 +19,8 @@ scLVM <- setClass(
   
 )
 
-setMethod("initialize","scLVM",function(.Object,Y,geneID=NULL,tech_noise=NULL){  
+setMethod("initialize","scLVM",function(.Object,Y,geneID=NULL,tech_noise=NULL){ 
+  require(rPython)
   #set data
   scLVM_py(Y, geneID, tech_noise) #push it to python and call python constructor
   .Object@Y = as.matrix(Y)
@@ -48,6 +49,9 @@ setMethod(f = "fitGPLVM",
           }
 )
 
+
+
+
 setGeneric(name = "varianceDecomposition",
            def = function(obj,...){
              standardGeneric("varianceDecomposition")
@@ -58,7 +62,6 @@ setMethod(f = "varianceDecomposition",
           definition = function(obj,K=NULL,i0=1,i1=1){            
             varianceDecomposition_py(K,i0,i1)
             obj <- setVarianceComponents(obj, normalize=TRUE)
-            obj <- setCorrectedExpression(obj)
             return(obj)              
           }
 )
@@ -100,8 +103,8 @@ setGeneric(name = "setCorrectedExpression",
 )
 setMethod(f = "setCorrectedExpression",
           signature = "scLVM",
-          definition = function(obj){            
-            Ycorr = getCorrectedExpression_py()
+          definition = function(obj,rand_eff_ids=NULL){
+            Ycorr = getCorrectedExpression_py(rand_eff_ids)
             obj@Ycorr = Ycorr
             return(obj)              
           }
@@ -114,8 +117,9 @@ setGeneric(name = "getCorrectedExpression",
 )
 setMethod(f = "getCorrectedExpression",
           signature = "scLVM",
-          definition = function(obj){            
-            Ycorr = obj@Ycorr
+          definition = function(obj,rand_eff_ids=NULL){
+            Ycorr = getCorrectedExpression_py(rand_eff_ids)
+            obj@Ycorr = Ycorr
             return(Ycorr)              
           }
 )
