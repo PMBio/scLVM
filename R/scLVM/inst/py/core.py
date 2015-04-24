@@ -4,7 +4,7 @@
 #you may not use this file except in compliance with the License.
 #You may obtain a copy of the License at
 #
-#    http://www.apache.org/licenses/LICENSE-2.0
+#	http://www.apache.org/licenses/LICENSE-2.0
 #
 #Unless required by applicable law or agreed to in writing, software
 #distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,6 +30,7 @@ import time
 import copy
 import warnings
 import os
+from gp_clvm import gpCLVM
 
 class scLVM:
 	"""
@@ -59,18 +60,15 @@ class scLVM:
 			self.set_tech_noise(tech_noise)
 
 	
-	def fitGPLVM(self,idx=None,k=1,standardize=False,out_dir='./cache',file_name=None,recalc=False, use_ard=False):
+	def fitGPLVM(self,idx=None,X0=None,k=1,standardize=False, use_ard=False, interaction=True, initMethod='fast'):
 		"""
 		Args:
 			idx:			index of the genes involved
 							(e.g., for capturing cell cycle, index of cell cycle genes)
+			X0:			known factor(s) on which to condition on when fitting the GPLVM
 			k:				number of latent factors
 			standardize:	if True, rescale gene expression by std prior to fitting GPLVM
 							(data are always mean-centered)
-			out_dir:		dir used to cache the results
-			file_name:		if not None, caches the results in the out_dir if the file does not exist
-							if the file exists loads the results if recalc is True
-			recalc:			if True and cache file exists, rewrite cacheFile
 			use_ard:		use automatic relevance detection (switch off unimportant factors)
 		Returns:
 			X:				hidden variable
@@ -81,12 +79,15 @@ class scLVM:
 		if use_ard==True and  k<2:
 			warnings.formatwarning = warning_on_one_line
 			warnings.warn('when using ARD consider choosing k>1')
+		if X0!=None:
+			assert use_ard == False, 'scLVM:: when fitting conditional GPLVM, use_ard has to be False'		
 
-		file_out = os.path.join(out_dir,file_name)
-		if not os.path.exists(file_out) or recalc==True:
+		Yconf = self.Y[:,idx]
+		Yconf-= Yconf.mean(0)
+		Kint = None
+		if X0==None:
+			#use PANAMA
 			# prepare data
-			Yconf = self.Y[:,idx]
-			Yconf-= Yconf.mean(0)
 			# fit gplvm
 			panama = PANAMA.PANAMA(Y=Yconf,use_Kpop=False,standardize=standardize)
 			panama.train(rank=k,LinearARD=use_ard)			
@@ -97,26 +98,17 @@ class scLVM:
 				varGPLVM = {'K':var['Kpanama'],'noise':var['noise']}
 			else:
 				varGPLVM = {'X_ARD':var['LinearARD'],'noise':var['noise']}
-			# export results
-			if not os.path.exists(out_dir):
-				os.makedirs(out_dir)
-			fout = h5py.File(file_out,'w')
-			RV = {'X':X,'Kconf':Kconf}
-			RV['cc_noise_filtered'] = idx
-			dumpDictHdf5(RV,fout)
-			dumpDictHdf5(varGPLVM,fout)
-			fout.close()
 		else:
-			# load results from the file
-			f = h5py.File(file_out,'r')
-			X = f['X'][:]; Kconf = f['Kconf'][:]
-			if use_ard==False:
-				varGPLVM = {'K':f['K'][:],'noise':f['noise'][:]}
-			else:	
-				varGPLVM = {'X_ARD':f['X_ARD'][:],'noise':f['noise'][:]}
-			f.close()
-
-		return X,Kconf,varGPLVM
+			# use gpCLVM
+			gp = gpCLVM(Y=Yconf,X0=X0,k=k,standardize=standardize,interaction=interaction)
+			params0 = gp.initParams(method=initMethod)
+			conv = gp.optimize(params0)
+			X = gp.getX()
+			Kconf = gp.getK()
+			if interaction==True:
+				Kint = gp.getKi()
+			varGPLVM = gp.getVarianceComps()
+		return X,Kconf,Kint,varGPLVM
 
 	def set_tech_noise(self,tech_noise):
 		"""
@@ -127,7 +119,7 @@ class scLVM:
 		
 		self.tech_noise = tech_noise
 		
-	def varianceDecomposition(self,K=None,tech_noise=None,idx=None,i0=None,i1=None,max_iter=10,verbose=False):
+	def varianceDecomposition(self,K=None,tech_noise=None,idx=None,i0=None,i1=None,max_iter=10,verbose=False, cache=True):
 		"""
 		Args:
 			K:				list of random effects to be considered in the analysis
@@ -152,8 +144,8 @@ class scLVM:
 				i0 = 0; i1 = self.G
 			idx = SP.arange(i0,i1)
 		elif type(idx)!=SP.ndarray:
-			idx = SP.array([idx])
-
+			idx = SP.array(idx)
+		idx = SP.intersect1d(SP.array(idx),SP.where(self.Y.std(0)>0)[0]) #only makes sense if gene is expressed in at least one cell
 		_G	 = len(idx)
 		var	= SP.zeros((_G,len(K)+2))
 		_idx   = SP.zeros(_G)
@@ -161,10 +153,12 @@ class scLVM:
 		conv   = SP.zeros(_G)==1
 		Ystar  = [SP.zeros((self.N,_G)) for i in range(len(K))]
 		count  = 0
-		Ystd = self.Y-self.Y.mean(0) #delta optimization might be more efficient
-		Ystd/= self.Y.std(0)
-		tech_noise = self.tech_noise/SP.array(self.Y.std(0))**2
-		for ids in idx:
+		Yidx = self.Y[:,idx]
+		Ystd = Yidx-Yidx.mean(0) 
+		Ystd/= Yidx.std(0) #delta optimization might be more efficient
+		tech_noise = self.tech_noise[idx]/SP.array(Yidx.std(0))**2
+
+		for ids in range(_G):
 			if verbose:
 				print '.. fitting gene %d'%ids
 			# extract a single gene
@@ -182,6 +176,7 @@ class scLVM:
 				scales0[len(K)+1]=SP.sqrt(tech_noise[ids]);
 				_conv = vc.optimize(scales0=scales0)
 				if _conv: break
+				
 			conv[count] = _conv
 			if not _conv:
 				var[count,-2] = SP.maximum(0,y.var()-tech_noise[ids])
@@ -193,26 +188,27 @@ class scLVM:
 			for ki in range(len(K)):
 				Ystar[ki][:,count]=_var[ki]*SP.dot(K[ki],KiY)
 			var[count,:] = _var
-			if self.geneID!=None:	geneID[count] = self.geneID[ids]
 			count+=1;
-	
-		# col header
+		if self.geneID!=None:	geneID = SP.array(self.geneID)[idx]
 		col_header = ['hidden_%d'%i for i in range(len(K))]
 		col_header.append('biol_noise')
 		col_header.append('tech_noise')
 		col_header = SP.array(col_header)
 
-		# annotate column and rows of var and Ystar
+		#annotate column and rows of var and Ystar
 		var_info = {'gene_idx':idx,'col_header':col_header,'conv':conv}
 		if geneID!=None:	var_info['geneID'] = SP.array(geneID)
 		Ystar_info = {'gene_idx':idx,'conv':conv}
 		if geneID!=None:	Ystar_info['geneID'] = SP.array(geneID)
 
 		# cache stuff
-		self.var   = var
-		self.Ystar = Ystar
-		self.var_info   = var_info
-		self.Ystar_info = Ystar_info
+		if cache == True:
+			self.var   = var
+			self.Ystar = Ystar
+			self.var_info   = var_info
+			self.Ystar_info = Ystar_info
+		else:
+			return var, var_info
 
 	def getVarianceComponents(self,normalize=False):
 		"""
@@ -263,24 +259,30 @@ class scLVM:
 
 		# loop on random effect to consider and correct
 		#predicitive means were calculated for standardised expression
-		Ystd = self.Y-self.Y.mean(0)
-		Ystd/= self.Y.std(0)
-		Ycorr = Ystd[:,self.Ystar_info['gene_idx']]#copy.copy(self.Y[:,self.Ystar_info['gene_idx']])
+		idx = self.Ystar_info['gene_idx']
+		Yidx = self.Y[:,idx]
+		Ystd = Yidx-Yidx.mean(0)
+		Ystd/= Yidx.std(0) #delta optimization might be more efficient
+		Ycorr = Ystd#copy.copy(self.Y[:,self.Ystar_info['gene_idx']])
 		for i in rand_eff_ids:
 			Ycorr -= self.Ystar[i]
 		Ycorr*=self.Y[:,self.Ystar_info['gene_idx']].std(0) #bring back to original scale
 		Ycorr+=self.Y[:,self.Ystar_info['gene_idx']].mean(0)
 		return Ycorr
 
-	def fitLMM(self,K=None,tech_noise=None,idx=None,i0=None,i1=None,verbose=False):
+	def fitLMM(self,expr = None,K=None,tech_noise=None,idx=None,i0=None,i1=None,verbose=False, recalc=True, standardize=True):
 		"""
 		Args:
 			K:				list of random effects to be considered in the analysis
 							if K is none, it does not consider any random effect
-			idx:			indices of the genes to be considered in the analysis
+			expr:				correlations are calculated between the gene expression data (self.Y) and these measures provided in expr. If None, self.Y i sused 	
+			idx:
+			indices of the genes to be considered in the analysis
 			i0:				gene index from which the anlysis starts
 			i1:				gene index to which the analysis stops
-			verbose:		if True, print progresses
+			verbose:		if True, print progress
+			recalc:			if True, re-do variance decomposition
+			standardize:		if True, standardize also expression 
 		Returns:
 			pv:				matrix of pvalues
 			beta:			matrix of correlations
@@ -289,34 +291,61 @@ class scLVM:
 							conv:		boolean vetor marking genes for which variance decomposition has converged
 							gene_row:   annotate rows of matrices
 		"""
-		assert self.var!=None, 'scLVM:: when multiple hidden factors are considered, varianceDecomposition decomposition must be used prior to this method'
+		
 
 		if idx==None:
 			if i0==None or i1==None:
 				i0 = 0; i1 = self.G
 			idx = SP.arange(i0,i1)
 		elif type(idx)!=SP.ndarray:
-			idx = SP.array([idx])
+			idx = SP.array(idx)
+		idx = SP.intersect1d(idx,SP.where(self.Y.std(0)>0)[0]) #only makes sense if gene is expressed in at least one cell
 
-		if K!=None and type(K)!=list:	K = [K]
-
+		
+		if K!=None:
+			if type(K)!=list:	K = [K]
+			if (recalc==True and len(K)>1) or (recalc==True and self.var==None):
+				print 'performing variance decomposition first...'
+				var_raw,var_info = self.varianceDecomposition(K=K,idx=idx, cache=False) 
+				var = var_raw/var_raw.sum(1)[:,SP.newaxis]
+			elif recalc==False and len(K)>1:
+				assert self.var!=None, 'scLVM:: when multiple hidden factors are considered, varianceDecomposition decomposition must be used prior to this method'
+				warnings.warn('scLVM:: recalc should only be set to False by advanced users: scLVM then assumes that the random effects are the same as those for which the variance decompostion was performed earlier.')
+				var_raw = self.var
+ 				var_info = self.var_info
+				var = var_raw/var_raw.sum(1)[:,SP.newaxis]
+		
 		lmm_params = {'covs':SP.ones([self.N,1]),'NumIntervalsDeltaAlt':100,'NumIntervalsDelta0':100,'searchDelta':True}
+				
+				
+		Yidx = self.Y[:,idx]
+		Ystd = Yidx-Yidx.mean(0)
+		Ystd/= Yidx.std(0) #delta optimization might be more efficient
+		
+		if expr==None:
+			expr = Ystd		
+		elif standardize==True:
+			exprStd = expr
+			exprStd = expr-expr.mean(0)
+			exprStd/= expr.std(0)
+			expr = exprStd
 
-		Ystd = self.Y-self.Y.mean(0)
-		Ystd/= self.Y.std(0)
+		_G1	  = idx.shape[0]
+		_G2	 = expr.shape[1]
 
-		beta   = SP.zeros((idx.shape[0],self.G))
-		pv	 = SP.zeros((idx.shape[0],self.G))
-		geneID = SP.zeros(idx.shape[0],dtype=str)
+		geneID = SP.zeros(_G1,dtype=str)
+		
+		beta   = SP.zeros((_G1,_G2))
+		pv	 = SP.zeros((_G1,_G2))
 		count  = 0
-		var = self.var/self.var.sum(1)[:,SP.newaxis] 
-		for ids in idx:
+		
+		for ids in range(_G1):
 			if verbose:
 				print '.. fitting gene %d'%ids
 			# extract a single gene
 			if K!=None:
 				if len(K)>1:
-					if self.var_info['conv'][count]==True:
+					if var_info['conv'][count]==True:
 						_K = SP.sum([var[count,i]*K[i] for i in range(len(K))],0)
 						_K/= _K.diagonal().mean()
 					else:
@@ -325,17 +354,17 @@ class scLVM:
 					_K = K[0]
 			else:
 				_K = None
-			lm = QTL.test_lmm(Ystd,Ystd[:,ids:ids+1],K=_K,**lmm_params)
+			lm = QTL.test_lmm(expr,Ystd[:,ids:ids+1],K=_K,**lmm_params)
 			pv[count,:]   = lm.getPv()[0,:]
 			beta[count,:] = lm.getBetaSNP()[0,:]
-			if self.geneID!=None:   geneID[count] = self.geneID[ids]
 			count+=1
 
-		info = {'conv':self.var_info['conv'],'gene_idx_row':idx}
+		if self.geneID!=None:   geneID = SP.array(self.geneID)[idx]
+		if recalc==True and K!=None  and len(K)>1:	
+			info = {'conv':var_info['conv'],'gene_idx_row':idx}
+		else:	
+			info = {'gene_idx_row':idx}
 		if geneID!=None:	info['gene_row'] = geneID
 
 		return pv, beta, info
-		
-		
 			
-
