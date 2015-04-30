@@ -6,11 +6,21 @@ output:
     toc: true
     toc_depth: 2
 ---
+# What is scLVM?
+
+scLVM is a modelling framework for single-cell RNA-seq data that can be used to dissect the observed heterogeneity into different sources, thereby allowing for the correction of confounding sources of variation.
+
+scLVM was primarily designed to account for cell-cycle induced variations in single-cell RNA-seq data where cell cycle is the primary soure of variability.
+
+Software by Florian Buettner, Paolo Casale and Oliver Stegle. scLVM is explained in more detail in the accompanying publication:
+
+Buettner F, Natarajan KN, Casale FP, Proserpio V, Scialdone A, Theis FJ, Teichmann SA, Marioni JC & Stegle O, 2015. Computational analysis of cell-to-cell heterogeneity in single-cell RNA-Sequencing data reveals hidden subpopulation of cells, Nature Biotechnology, doi: 10.1038/nbt.3102.
+
 
 # Data preparation and pre-processing
 
- In the following exmaple script we illustrate how the pre-processing was performed for the T-cell data.
-First, we need to load some required packages. We also need to set the limix path; if you installed, you can delete the last 2 lines, otherwise you need to adapt the path.
+In the following exmaple script we illustrate how the pre-processing was performed for the T-cell data.
+First, we need to load some required packages. 
 
 ```{r,message=FALSE}
 library(genefilter)
@@ -19,6 +29,9 @@ require(ggplot2)
 library(gplots)
 require(DESeq2)
 library(scLVM)
+
+
+#We also need to set the limix path; if you installed, you can delete the last 2 lines, otherwise you need to adapt the path.
 limix_path = '/Users/flo/software/limix-master/build/release.darwin/interfaces/python'
 configLimix(limix_path)
 
@@ -27,10 +40,10 @@ configLimix(limix_path)
 Now, we load he data frames containing the mapped read counts for the 81 T-cells described in the paper.
 ```{r}
 data(data_Tcells)
-
+help(data_Tcells)
 ```
 
-Next, we look for the spike-ins which we then use to normalise the data. We omitted the normalization for cell size as proposed in Brennecke et al. 2013, because the computational correction by scLVM yielded much better results . This is likely explained by noting that cell size and cell cycle are correlated, thus the normalization proposed by Brennecke et al. reduces the amount of information available for inferring cell-cell correlations due to cell cycle.
+Next, we look for the spike-ins which we then use to normalise the data. In general, there data can be normalized either with a size factor derived from the endogenous genes (normalising for cell size) or a size factor derived from the ERCC spike-ins (only normalising for sequencing depth).  Here, we use a spike-in based normalisation as  cell size and cell cycle are correlated. 
 
 ```{r}
 dataMouse[ 1:5, 1:4 ]
@@ -112,25 +125,27 @@ genes_het_bool = as.vector(is_het) #variable genes
 geneID = rownames(nCountsMmus) #gene IDs
 tech_noise = as.vector(techNoise$techNoiseLog) #technical noise
 
+
+```
+
+# Running vanilla scLVM
+We first construct an scLVM object and iniitalize it with a normalised expression matirx and estimates of technical noise which can be computed using the pre-processing functions. In addition, it can be useful to include a set of variable genes which can also be determined using the preprocessing functions as described above.
+
+```{r}
 #construct and initialize new scLVM object
 sclvm = new("scLVM")
 sclvm = init(sclvm,Y=Y,tech_noise = tech_noise)
 ```
 
-# Running vanilla scLVM
-
 ## Fitting the latent factors
-Next, we fit the latent factor. Here, we fit the cell cycle factor. We first use an ARD prior and fit a large number in order to assess how many factors we need in order to capture cell cycle. Note that in this example we expected cell cycle to be the major driver of cell-cell variability
+Next, we fit the latent factor. Here, we fit the cell cycle factor. We first use an ARD prior and fit a large number of factors (here k=20) in order to assess how many factors we need in order to capture cell cycle. The ARD prior tells us the relevance of each factor. Note that in this example we expected cell cycle to be the major driver of cell-cell variability.
 
 ```{r}
 #get cell cycle genes from GO 
 ens_ids_cc <- getEnsembl('GO:0007049')
 
 CellCycleARD = fitFactor(sclvm,geneSet = ens_ids_cc, k=20,use_ard = TRUE)
-
-
 ```
-
 
 In order to establish the number of latent factors used to model the cell-cell covariance we plot the variance contributions of the individual latent factors.
 
@@ -153,7 +168,7 @@ Next, we plot the inferred cell-cell covarince matirx.
 
 ```{r}
 #Plot inferred similarity matrix
-image(Kcc,xaxt = "n", yaxt = "n", col = )
+image(Kcc,xaxt = "n", yaxt = "n", xlab = 'cells', ylab = 'cells')
 title('Similarity matrix based on cell cycle')
 ```
 
@@ -237,9 +252,9 @@ geneSymbols = getSymbols(colnames(Yhet))
 
 gene_plot = "Gata3"
 idx_gene = which(geneSymbols==gene_plot)
+tsne = Rtsne(Ycorr, perplexity = 20)
 
-
-#PCA on cell cycle corrected gene expression data
+#PCA on corrected data
 pcaCorr = prcomp(Ycorr,2)
 d <- qplot(pcaCorr$x[,1], pcaCorr$x[,2],colour=Ycorr[,idx_gene], xlab = 'PC1', ylab = 'PC2')
 d + ggtitle('PCA corrected gene expression') + scale_color_continuous(name =gene_plot)
