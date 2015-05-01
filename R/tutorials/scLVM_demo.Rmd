@@ -252,7 +252,6 @@ geneSymbols = getSymbols(colnames(Yhet))
 
 gene_plot = "Gata3"
 idx_gene = which(geneSymbols==gene_plot)
-tsne = Rtsne(Ycorr, perplexity = 20)
 
 #PCA on corrected data
 pcaCorr = prcomp(Ycorr,2)
@@ -269,7 +268,7 @@ d + ggtitle('PCA uncorrected gene expression') + scale_color_continuous(name =ge
 
 ```
 
-# Running scLVM with multiple factors
+# Fitting multiple factors with scLVM
 In 'vanilla' scLVM we implicitly assume that cell cycle is the major driver of heterogeneity; that's why we can simply capture cell-cycle effects by fiiting a GPLVM on the cell cycle genes. However, in many applications, either cell cycle is not the dominant source of variation (e.g. imagine a time-course experiment where pluripotnet cells are differentiated towards a specific lineage - here, most of the observed variablity may be induced by differentiation) and/or there are several factors of interest driving the observed heterogeneity (e.g. in the T-cell data, cell-cycle is the major  driver of hetergeneity, but differentation processes are also playing an important role). 
 In both cases, we would like a framework where we condition on the dominant factor (cell cycle for the T-cell experients or facotrs reflecting the experimental desing in more complex experiments). 
 
@@ -322,13 +321,13 @@ Next, we plot the inferred cell-cell covarince matrices.
 ```{r}
 #Plot inferred similarity matrix
 par(mfrow = c(1,3))
-image(Kcc,xaxt = "n", yaxt = "n", col = )
+image(Kcc,xaxt = "n", yaxt = "n", xlab = 'cells', ylab = 'cells')
 title('Similarity matrix based on cell cycle')
 
-image(KTh2,xaxt = "n", yaxt = "n", col = )
+image(KTh2,xaxt = "n", yaxt = "n", xlab = 'cells', ylab = 'cells')
 title('Similarity matrix based on Th2 factor')
 
-image(Kint,xaxt = "n", yaxt = "n", col = )
+image(Kint,xaxt = "n", yaxt = "n", xlab = 'cells', ylab = 'cells')
 title('Interaction similarity matrix')
 
 ```
