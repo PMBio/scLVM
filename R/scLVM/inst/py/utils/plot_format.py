@@ -19,7 +19,6 @@ import pylab as PL
 plparams = {'backend': 'pdf',
           'axes.labelsize': 14,
           'text.fontsize': 14,
-          'title.fontsize': 22,
           'legend.fontsize': 13,
           'xtick.labelsize': 14,
           'ytick.labelsize': 14,
