@@ -1,20 +1,15 @@
 exportPattern("^[[:alpha:]]+")
 exportMethods(
-    "fitGPLVM",
-    "fitLMM",
+    "fitFactor",
+    "LMM",
     "getCorrectedExpression",
-    "getK",
-    "getKi",
     "getVarianceComponents",
-    "getX",
     "initialize",
-    "optimize",
     "setCorrectedExpression",
     "setVarianceComponents",
     "varianceDecomposition" 
 )
 exportClasses(
-    "gpCLVM",
      "scLVM" 
 )
 
