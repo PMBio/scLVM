@@ -1,0 +1,181 @@
+---
+title: "An R package for scLVM"
+author: "Florian Buettner,  F. Paolo Casale and Oliver Stegle"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+---
+
+# Data preparation and pre-processing
+
+In the following exmaple script we illustrate how the pre-processing was performed for the mESC data without spike-ins.
+First, we need to load some required packages. We also need to set the limix path; if you installed, you can delete the last 2 lines, otherwise you need to adapt the path.
+
+```{r,message=FALSE}
+library(genefilter)
+library(DESeq2)
+library(statmod)
+library(rPython)
+library(ggplot2)
+library(gplots)
+library(scLVM)
+limix_path = '/Users/flo/software/limix-master/build/release.darwin/interfaces/python'
+configLimix(limix_path)
+```
+
+Now, we load two data frames containing, one containing a list of cell cycle genes annotated in Cyclebase, the other one containing mapped read counts for the 81 T-cells described in the paper.
+```{r}
+data(data_mESCquartz)
+
+```
+
+Next, we look for the spike-ins which we then use to normalise the data. We omitted the normalization for cell size as proposed in Brennecke et al. 2013, because the computational correction by scLVM yielded much better results . This is likely explained by noting that cell size and cell cycle are correlated, thus the normalization proposed by Brennecke et al. reduces the amount of information available for inferring cell-cell correlations due to cell cycle.
+
+```{r}
+#normalise read counts
+nCountsMmus <- dataQuartz
+
+```
+
+We use the endogenous read counts for fitting the mean-CV2 relation using a log-linear fit in the log-space. Alternatively, we can fit the mean-variance relationship in the log-space using local 2nd order polynomial regression (loess).
+
+
+```{r}
+#use log-linear fit for mean-CV2 relation
+techNoise = fitTechnicalNoise(nCountsMmus, fit_type = 'log', use_ERCC = FALSE, plot = F) 
+
+#or mean-variance
+techNoiseLogVarFit = fitTechnicalNoise(nCountsMmus, fit_type = 'logvar', use_ERCC = FALSE, plot = T,fit_opts = list(span=1.1)) 
+
+```
+
+Once we have completed the fitting process, we can call variable genes.
+
+```{r}
+#call variable genes
+is_het = getVariableGenes(nCountsMmus, techNoise$fit, method = "fit")
+table(is_het)
+
+#we an also do this for the other fit
+is_hetLogVar = getVariableGenes(nCountsMmus, techNoiseLogVarFit$fit)
+table(is_hetLogVar)
+
+``` 
+
+
+In order to fit the latent cell cycle factor we need to retrieve cell cycle genes. For illustration purposes, here we only use genes annotated in GO (term GO:0007049).
+
+```{r}
+
+#get cell cycle genes from GO 
+ens_ids_cc <- getEnsembl('GO:0007049')
+idx_cellcyclegenes <- na.omit(match(ens_ids_cc, rownames(nCountsMmus)))
+```
+
+
+Now, we have preprocessed the data and can run scLVM.
+```{r}
+
+#rename a few variables
+Y = t(log10(nCountsMmus+1)) #normalised read counts
+genes_het_bool = as.vector(is_het) #variable genes
+geneID = rownames(nCountsMmus) #gene IDs
+tech_noise = as.vector(techNoise$techNoiseLog) #technical noise
+
+#construct scLVM object
+sclvm = new("scLVM")
+sclvm = init(sclvm,Y=Y,tech_noise = tech_noise)
+```
+
+Next, we fit the latent factor. Here, we fit the cell cycle factor. We first use an ARD prior and fit a large number in order to assess how many factors we need in order to capture cell cycle. Note that in this example we expected cell cycle to be the major driver of cell-cell variability
+
+```{r}
+#cell cycle genes
+
+#get cell cycle genes from GO 
+ens_ids_cc <- getEnsembl('GO:0007049')
+
+CellCycleARD = fitFactor(sclvm,geneSet = ens_ids_cc, k=20,use_ard = TRUE)
+```
+
+
+In order to establish the number of latent factors used to model the cell-cell covariance we plot the variance contributions of the individual latent factors.
+
+```{r}
+plot(seq(1, length(CellCycleARD$X_ard)), CellCycleARD$X_ard, xlab = '# Factor', ylab = 'Variance explained')
+title('Variance explained by latent factors')
+```
+
+While there is a large gap in the proportion of explained variance between the first and the second factor, there is a second gap between the 2nd and the 3rd factor. Consequently, we choose to re-fit the scLVM mdoel with two latent factors.
+
+```{r}
+CellCycle = fitFactor(sclvm,geneSet = ens_ids_cc,k=2)
+
+#Get cell-cycle factor
+Kcc = CellCycle$K
+Xcc = CellCycle$X
+```
+
+Next, we plot the inferred cell-cell covarince matirx.
+
+```{r}
+#Plot inferred similarity matrix
+image(Kcc,xaxt = "n", yaxt = "n", col = )
+title('Similarity matrix based on cell cycle')
+```
+
+
+# Variance decomposition and cell-cycle corection
+
+We first perfrom a variance decomposition on the variable genes. The computation time for the next step can be substantial. If large datasets are considerd, it may be advisable to distribute these calculations on a high performance compute cluster. In this case idx determines the range of genes for wich this anlaysis is performed. 
+
+```{r}
+idx_het = which(is_het)
+
+# fit the model for variable genes
+sclvm = varianceDecomposition(sclvm, K=Kcc, idx = idx_het)
+``` 
+
+Once the contribution of cell cycle to the observed variance is estimated, cell-cycled corrected gene expression levels can be obtained. Variance components are normalised such that they sum uo to 1 and genes for which the variance decompostion has not convered are filtered out.
+
+```{r}
+
+# get variance components
+results_var = getVarianceComponents(sclvm)
+var_filtered = results_var$var[results_var$conv,] # filter out genes for which vd has not converged
+head(var_filtered)
+
+# get corrected expression levels
+Ycorr = getCorrectedExpression(sclvm)
+dim(Ycorr)
+
+```
+
+After having perfromed the variance decompostion we can illustrate the contributions of the indiviudal components.
+
+```{r}
+var_mean = apply(var_filtered,2,mean)
+colors = c('Green','Blue','Gray')
+pie(var_mean, , col = colors)
+```
+
+
+Finally, let's make a standard PCA on the corrected and uncorrected data. If you would like to use non-linear PCA as in our paper, we suggest you use the python implementation as illustrated in our ipython notebook.
+
+```{r}
+cell_cycle_phase = unlist(lapply(strsplit(colnames(dataQuartz),'_'),function(x)x[[2]]))
+
+#PCA on cell cycle corrected gene expression data
+pcaCorr = prcomp(scale(Ycorr),2)
+d <- qplot(pcaCorr$x[,1], pcaCorr$x[,2],colour=cell_cycle_phase, xlab = 'PC1', ylab = 'PC2')
+d + ggtitle('PCA corrected gene expression') + scale_color_discrete(name = "")
+
+#PCA on uncorrected data
+pca = prcomp(scale(Y[,idx_het]),2)
+d <- qplot(pca$x[,1], pca$x[,2],colour=cell_cycle_phase, xlab = 'PC1', ylab = 'PC2')
+d + ggtitle('PCA uncorrected gene expression') + scale_color_discrete(name = "")
+
+
+
+```

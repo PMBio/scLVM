@@ -1,0 +1,18 @@
+exportPattern("^[[:alpha:]]+")
+exportMethods(
+    "fitFactor",
+    "LMM",
+    "getCorrectedExpression",
+    "getVarianceComponents",
+    "initialize",
+    "setCorrectedExpression",
+    "setVarianceComponents",
+    "varianceDecomposition" 
+)
+exportClasses(
+     "scLVM" 
+)
+
+import(genefilter)
+import(statmod)
+import(AnnotationDbi)
