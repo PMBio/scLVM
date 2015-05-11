@@ -18,6 +18,10 @@ __version__ = '0.1'
 
 import core
 from core import *
+from core import scLVM
+import gp_clvm
+from gp_clvm import gpCLVM
+
 
 def getVerbose(verbose):
 	"""resolve verbose flag, using module settings if verbose=None"""
