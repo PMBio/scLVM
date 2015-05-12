@@ -15,26 +15,26 @@ Observed heterogeneity in single-cell profiling data is multi-factorial. scLVM p
 
 ##Installation:
 
-* scLVM is particularly easy to install using the [anaconda](https://store.continuum.io/cshop/anaconda) python distribution. 
+* scLVM can be installed  using ``pip install scLVM`` on most systems. If you have trouble using pip, have a loot at the detailed instructions in the wiki.
  
 * It requires Python 2.7 with
   - scipy, h5py, numpy, pylab
 
-* scLVM relies heavily on [limix](https://github.com/PMBio/limix) (version 0.6.4 or higher), which can be installed using ``pip install limix`` on most systems.
+* In addition, scLVM relies heavily on [limix](https://github.com/PMBio/limix) (version 0.6.4 or higher).
 
 * If you would like to use the non-linear GPLVM for visualisation, we suggest installing the [GPy](https://github.com/SheffieldML/GPy) package. This can be installed using `pip install GPy`.
 
 * Preprocessing steps are executed in R and require R>3.0:
 For an example of how raw counts can be processed appropriately, see [R/transform_counts_Tcells.R](https://github.com/PMBio/scLVM/blob/master/R/transform_counts_Tcells.R). A more extensively commented markdown version of the script can be found here: [transform_counts_demo.Rmd](https://github.com/PMBio/scLVM/blob/master/R/transform_counts_demo.Rmd).
 
-* For users who prefer to run the entire scLVM pipeline in R, we also provide an R wrapper wich is based on [rPython](http://cran.r-project.org/web/packages/rPython/index.html). A commented R markdown script can be found here: [scLVMr.Rmd](https://github.com/PMBio/scLVM/blob/master/R/scLVMr.Rmd).
+* For users who prefer to run the entire scLVM pipeline in R, we also provide an R package wich is based on [rPython](http://cran.r-project.org/web/packages/rPython/index.html). The scLVM R package can be downloaded [here](https://github.com/PMBio/scLVM/tree/master/R)
 
 ##How to use scLVM?
 The current software version should be considered as beta. Still, the method is working and can be used to reproduce the result of the accompanying publication [1]. More extensive documentation, tutorials and examples will be available soon.
 
-A good starting point are the [tutorials](https://github.com/PMBio/scLVM/blob/master/tutorials).
+A good starting point are the [tutorials](https://github.com/PMBio/scLVM/blob/master/tutorials) for python and the [R package](https://github.com/PMBio/scLVM/tree/master/R/tutorials) .
 
-For an illustration of how scLVM can be applied to the T-cell data considered in Buettner et al. [1], we have prepared a notebook that can be viewed [interactively](http://nbviewer.ipython.org/github/pmbio/scLVM/blob/master/tutorials/tcell_demo.ipynb) or alternatively as [PDF](https://github.com/PMBio/scLVM/blob/master/tutorials/tcell_demo.pdf) export.
+For an illustration of how scLVM can be applied to the T-cell data considered in Buettner et al. [1], we have prepared a notebook that can be viewed [interactively](http://nbviewer.ipython.org/github/pmbio/scLVM/blob/master/tutorials/tcell_demo.ipynb) or alternatively as [PDF](https://github.com/PMBio/scLVM/blob/master/tutorials/tcell_demo.pdf) export. This is also available for the [R package](https://github.com/PMBio/scLVM/blob/master/R/tutorials/scLVM_vignette.Rmd).
 
 
 ##Problems ?
@@ -45,4 +45,4 @@ If you want to use scLVM and encounter any issues, please contact us by email: s
 See [LICENSE](https://github.com/PMBio/scLVM/blob/master/license.txt)
 
 ###References
-[1] Buettner F, Natarajan KN, Casale FP, Proserpio V, Scialdone A, Theis FJ, Teichmann SA, Marioni JC & Stegle O, 2014. Computational analysis of cell-to-cell heterogeneity in single-cell RNA-Sequencing data reveals hidden subpopulation of cells, Nature Biotechnology, doi: 10.1038/nbt.3102.
+[1] Buettner F, Natarajan KN, Casale FP, Proserpio V, Scialdone A, Theis FJ, Teichmann SA, Marioni JC & Stegle O, 2015. Computational analysis of cell-to-cell heterogeneity in single-cell RNA-Sequencing data reveals hidden subpopulation of cells, Nature Biotechnology, doi: 10.1038/nbt.3102.
