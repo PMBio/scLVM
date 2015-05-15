@@ -1,4 +1,0 @@
-load("/Users/flo/projects/scLVM/R/scLVM/data/data_Tcells.rda")
-ls()
-load("/Users/flo/projects/scLVM/R/scLVM/data/data_mESCquartz.rda")
-ls()
