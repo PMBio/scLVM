@@ -29,7 +29,7 @@ fitLatent_py = function(objName, idx=NULL, XKnown = NULL, k=1,standardize=FALSE,
   python.assign("use_ard",use_ard)
   python.assign("interaction",interaction)
   python.assign("initMethod",initMethod)
-  python.exec(paste("X,K,Kint,varGPLVM_ARD = ",objName,".fitGPLVM(idx=idx, X0=X0, k=k,standardize=standardize, use_ard=use_ard, interaction=interaction, initMethod=initMethod)",sep=""))
+  python.exec(paste("X,K,Kint,varGPLVM_ARD = ",objName,".fitFactor(idx=idx, X0=X0, k=k,standardize=standardize, use_ard=use_ard, interaction=interaction, initMethod=initMethod)",sep=""))
   
   res=list()
   if(use_ard==TRUE){
@@ -76,7 +76,7 @@ varianceDecomposition_py = function(objName,K=NULL,idx=NULL){
       row.names(K_)=c() #strip Y of column and row names
       colnames(K_)=c()
       python.assign("K_",K_) 
-      python.exec("K.append(SP.array(K_))")      
+      python.exec("K.append(SP.double(SP.array(K_)))")      
     }        
   }
   

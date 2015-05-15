@@ -21,6 +21,6 @@
   }
   
   
-  tryCatch(python.load(system.file("py","init_data.py",package="scLVM")),
+  tryCatch(python.load(system.file("pysrc","init_data.py",package="scLVM")),
            error = function(e) python_error_fun(e))
 }
