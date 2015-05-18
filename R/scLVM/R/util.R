@@ -168,11 +168,11 @@ fitTechnicalNoise <- function(nCountsEndo,nCountsERCC=NULL,
       if(!is.null(fit_opts)){
         if("minmean" %in% names(fit_opts)){minmean = fit_opts$minmean}else{minmean=2}
       }else{
-        minmean = 0.5
+        minmean = 0.3
       }
       
       LogNcountsList = list()
-      useForFitL = LmeansEndo>0.3
+      useForFitL = LmeansEndo>minmean
       LogNcountsList$mean = LmeansEndo[useForFitL]
       LogNcountsList$cv2 = Lcv2Endo[useForFitL]
       fit_loglin = nls(cv2 ~ a* 10^(-k*mean), LogNcountsList,start=c(a=10,k=2))
@@ -346,12 +346,12 @@ getVariableGenes <- function(nCountsEndo, fit, method = "fit", threshold = 0.1, 
     LCountsEndo <- log10(nCountsEndo+1)
     LmeansEndo <- rowMeans( LCountsEndo )
     Lcv2Endo = rowVars(LCountsEndo)/LmeansEndo^2
-    is_het = (coefficients(fit)["a"] *10^(-coefficients(fit)["k"]*LmeansEndo) < Lcv2Endo) &  LmeansEndo>0.3  
+    is_het = (0.5*coefficients(fit)["a"] *10^(-coefficients(fit)["k"]*LmeansEndo) < Lcv2Endo) &  LmeansEndo>0.3  
     
     if(plot==TRUE){
       plot( LmeansEndo, Lcv2Endo, log="y", col=1+is_het,ylim=c(1e-3,1e2),xlab='meansLogEndo',ylab='cv2LogEndo')
       xg <- seq( 0, 5.5, length.out=100 )
-      lines( xg, coefficients(fit)[1] *10^(-coefficients(fit)[2]*xg ),lwd=2,col='green' )
+      lines( xg, 0.5*coefficients(fit)[1] *10^(-coefficients(fit)[2]*xg ),lwd=2,col='green' )
       legend('bottomright',c('Endo. genes','Var. genes',"Fit"),pch=c(1,1,NA),lty = c(NA,NA,1),col=c('black','red', 'blue'),cex=0.7)   
       
     }
@@ -421,18 +421,20 @@ getEnsembl <- function(term, species = 'mMus'){
   
   if(species=='mMus'){
     if(require(org.Mm.eg.db)){
-    xxGO <- AnnotationDbi::as.list(org.Mm.egGO2EG)}else{
+    xxGO <- AnnotationDbi::as.list(org.Mm.egGO2EG)
+    x <- org.Mm.egENSEMBL}else{
       stop("Install org.Mm.eg.db package for retrieving gene lists from GO")
     }
   }else{
     if(require(org.Hs.eg.db)){
-  xxGO <- AnnotationDbi::as.list(org.Hs.egGO2EG)}else{
+  xxGO <- AnnotationDbi::as.list(org.Hs.egGO2EG)
+  x <- org.Hs.egENSEMBL}else{
     stop("Install org.Hs.eg.db package for retrieving gene lists from GO")
   }
   }
   cell_cycleEG <-unlist(xxGO[term])
   #get ENSEMBLE ids
-  x <- org.Mm.egENSEMBL
+
   mapped_genes <- mappedkeys(x)
   xxE <- as.list(x[mapped_genes])
   ens_ids_cc<-unlist(xxE[cell_cycleEG])  
