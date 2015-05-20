@@ -1,0 +1,124 @@
+---
+title: "Process sc-RNAseq read counts for scLVM with no spike-ins available"
+author: "Florian Buettner, F. Paolo Casale and Oliver Stegle"
+#date: "7. Oktober 2014"
+output: html_document
+---
+
+In order to run scLVM in python as outlined in the demo notebook, it is necessary to pre-process the data which is typically done in R. In the following exmaple script we illustrate how this pre-processing can be performed when no spike-ins are available. In case you do have spike-ins, please refer to the `transform_counts_demo.Rmd` script in the same folder.
+
+First, we need to load some required packages.
+
+```{r,message=FALSE}
+library(statmod)
+library(gdata)
+library(genefilter)
+library(EBImage)
+library(rhdf5)
+library(DESeq)
+library(statmod)
+library(hom.Hs.inp.db)
+library(AnnotationDbi)
+library(org.Mm.eg.db)
+```
+
+
+Now, we load two data frames containing, one containing a list of cell cycle genes annotated in Cyclebase, the other one containing mapped read counts for the 35 mESCs described in Sasagawa et al. 2013. As in the original publication we consider FPKM values.
+```{r}
+load('./data_mESCquartz.Rdata')
+countsQuartz <- dataQuartz
+```
+
+
+Owing to the lack of spike-ins for the Quartz-Seq dataset, we estimate the baseline variability in these data using a log-linear fit to capture the relationship between mean and squared coefficient of variation of the log- transformed data. 
+
+```{r}
+#log-transformed counts 
+LCountsQuartz <- log10(countsQuartz+1)
+LmeansQuartz <- rowMeans( LCountsQuartz )
+LvarsQuartz <- rowVars( LCountsQuartz )
+Lcv2Quartz <- LvarsQuartz / LmeansQuartz^2
+
+
+LogNcountsList = list()
+useForFitL = LmeansQuartz>0.3
+LogNcountsList$mean = LmeansQuartz[useForFitL]
+LogNcountsList$cv2 = Lcv2Quartz[useForFitL]
+fit_loglin = nls(cv2 ~ a* 10^(-k*mean), LogNcountsList,start=c(a=10,k=2))
+
+```
+
+
+To approximately account for technical noise, we then consider all genes with a squared CV greater than the estimated squared baseline CV as variable.
+
+```{r}
+#variable genes
+is_het = (coefficients(fit_loglin)["a"] *10^(-coefficients(fit_loglin)["k"]*LmeansQuartz) < Lcv2Quartz) &  LmeansQuartz>0.3
+
+LogVar_techQuartz_logfit <- coefficients(fit_loglin)["a"] *10^(-coefficients(fit_loglin)["k"]*LmeansQuartz)*LmeansQuartz^2
+
+#plot mean/cv2 relationship and variable genes
+plot( LmeansQuartz, Lcv2Quartz, log="y", col=1+is_het,xlab='meansLogQuartz',ylab='cv2LogQuartz',ylim=c(1e-3,1e2))  
+xg <- seq( 0, 4.5, length.out=100 )
+lines( xg, coefficients(fit_loglin)["a"] *10^(-coefficients(fit_loglin)["k"]*xg ),lwd=2,col='blue' )
+legend('topright',c('Variable genes'),pch=c(1),col=c('red'),cex=0.8)
+
+```
+
+In order to fit the latent cell cycle factor we need to retrieve cell cycle genes annotated in Cyclebase and GO. First, we process the Cyclebase data and get the mouse homologs.
+
+```{r, message=FALSE}
+#gene names in the Quartz-Seq mESC data.
+gene_names = rownames(dataQuartz)
+gene_names_het = gene_names[is_het]
+
+#all Cycle base genes homologs (top 600 genes)
+hu2musAll = inpIDMapper(dataCB[1:600,3],'HOMSA','MUSMU',srcIDType='ENSEMBL',destIDType='ENSEMBL')
+cellcyclegenes_filterCB = na.omit(match(unlist(hu2musAll),rownames(dataQuartz)))
+```
+
+In addition we retrieve cell cycle genes from GO:
+
+```{r}
+#get cell cycle genes from GO 
+xxGO <- as.list(org.Mm.egGO2EG)
+cell_cycleEG <-unlist(xxGO['GO:0007049'])
+#get ENSEMBLE ids
+x <- org.Mm.egENSEMBL
+mapped_genes <- mappedkeys(x)
+xxE <- as.list(x[mapped_genes])
+ens_ids_cc<-unlist(xxE[cell_cycleEG])
+cc_gene_indices <- na.omit(match(ens_ids_cc, rownames(dataQuartz)))
+```
+
+Now we just need to convert ENSEMBL IDs to gene symbols and then save everything as hdf5 file.
+
+```{r}
+#ensemble IDs to gene symbols
+x <- org.Mm.egSYMBOL
+# Get the gene symbol that are mapped to an entrez gene identifiers
+mapped_genes <- mappedkeys(x)
+# Convert to a list
+xx <- as.list(x[mapped_genes])
+xxenseg <- as.list(org.Mm.egENSEMBL2EG)
+gene_syms=unlist(xx[unlist(xxenseg[gene_names])])
+gene_names_list<-(lapply(xxenseg[gene_names],function(x){if(is.null(x)){x=NA}else{x=x[1]}}))
+sym_names=unlist(lapply(xx[unlist(gene_names_list)],function(x){if(is.null(x)){x=NA}else{x=x[1]}}))
+sym_names[is.na(sym_names)]=gene_names[is.na(sym_names)]
+
+
+```
+
+Rename a few variables and save data. The saved hdf5 file can then be used in scLVM as illustrated in the ipython notebook.
+
+```{r}
+#rename a few variables...
+tech_noise = LogVar_techQuartz_logfit
+cellcyclegenes_filter <- cc_gene_indices
+cell_names <- colnames(countsQuartz)
+Y <- LCountsQuartz
+genes_het_bool <- (is_het)*1
+
+
+h5save(cellcyclegenes_filterCB,gene_names,sym_names,cellcyclegenes_filter,cell_names,Y,genes_het_bool,tech_noise,file='LogCountsQuartz.h5f')
+```
