@@ -25,7 +25,7 @@ Observed heterogeneity in single-cell profiling data is multi-factorial. scLVM p
 * If you would like to use the non-linear GPLVM for visualisation, we suggest installing the [GPy](https://github.com/SheffieldML/GPy) package. This can be installed using `pip install GPy`.
 
 * Preprocessing steps are executed in R and require R>3.0:
-This can either be perfromed as part of the R package (see next bullet point) or via scripts. For an example script of how raw counts can be processed appropriately, see [R/transform_counts_Tcells.R](https://github.com/PMBio/scLVM/blob/master/R/scripts/transform_counts_Tcells.R). A more extensively commented markdown version of the script can be found here: [transform_counts_demo.Rmd](https://github.com/PMBio/scLVM/blob/master/R/scripts/transform_counts_demo.Rmd).
+This can either be perfromed as part of the [R package](https://github.com/PMBio/scLVM/blob/master/R/tutorials/scLVM_vignette.Rmd) (see also next bullet point) or via scripts. For an example script of how raw counts can be processed appropriately, see [R/transform_counts_Tcells.R](https://github.com/PMBio/scLVM/blob/master/R/scripts/transform_counts_Tcells.R). A more extensively commented markdown version of the script can be found here: [transform_counts_demo.Rmd](https://github.com/PMBio/scLVM/blob/master/R/scripts/transform_counts_demo.Rmd).
 
 * For users who prefer to run the entire scLVM pipeline in R, we also provide an R package wich is based on [rPython](http://cran.r-project.org/web/packages/rPython/index.html). The scLVM R package can be downloaded [here](https://github.com/PMBio/scLVM/tree/master/R)
 
