@@ -15,7 +15,7 @@ Observed heterogeneity in single-cell profiling data is multi-factorial. scLVM p
 
 ##Installation:
 
-* scLVM can be installed  using ``pip install scLVM`` on most systems. If you have trouble using pip, have a loot at the detailed instructions in the wiki.
+* scLVM can be installed  using ``pip install scLVM`` on most systems. If you have trouble using pip, have a look at the detailed instructions in the wiki.
  
 * It requires Python 2.7 with
   - scipy, h5py, numpy, pylab
