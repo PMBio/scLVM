@@ -2,11 +2,11 @@
 
 This folder contains 
 
-* An R package wich is based on rPython.
+* An R package which is based on rPython.
   * To install the package download the .tar.gz file and run R CMD INSTALL scLVM_0.99.1.tar.gz
   * Source code can be found in the scLVM folder
   * Detailed instructions for installing python dependencies can be found in the [wiki](https://github.com/PMBio/scLVM/wiki/Installation)
-* R markdown scripts illustrating how to use the R interface for data with and without spike-ins. We also illustrate how to use scLVM in the presence of multiple facotrs. All scripts are located in the tutorial folder.
+* [R vignettes](https://github.com/PMBio/scLVM/blob/master/R/tutorials/scLVM_vignette.Rmd) illustrating how to use the R interface for data with and without spike-ins . We also illustrate how to use scLVM in the presence of multiple facotrs. All scripts are located in the tutorial folder.
 *  Filtered count tables needed to run the exanmples are part of the package and located in the data folder
   * ``data_Tcells.rda`` contains the T-cell data [1]
   * ``data_mESCquartz.rda`` contains the FPMK normalized mESC data (Quartz-Seq protocol) from  [2]
