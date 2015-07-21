@@ -16,7 +16,7 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README'), encoding='utf-8') as f:
     long_description = f.read()
     
-reqs = ['numpy', 'scipy', 'pygp >=1.1.07', 'matplotlib >=1.2','h5py','limix']
+reqs = ['numpy', 'scipy', 'pygp >=1.1.07', 'matplotlib >=1.2','h5py','limix >=0.6.6']
 
 setup(
     name='scLVM',
@@ -24,7 +24,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='0.1.1',
+    version='0.1.4',
 
     description='scLVM',
     long_description=long_description,

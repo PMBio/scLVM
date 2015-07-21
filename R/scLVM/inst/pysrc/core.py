@@ -15,12 +15,23 @@
 import sys
 sys.path.append('./..')
 import limix
-import limix.modules.panama as PANAMA
-import limix.modules.varianceDecomposition as VAR
-import limix.modules.qtl as QTL
-from utils.misc import dumpDictHdf5
-from utils.misc import PCA 
-from utils.misc import warning_on_one_line 
+def versiontuple(v):
+    return tuple(map(int, (v.split("."))))
+try:
+    limix.__version__
+    import limix.modules.panama as PANAMA
+    import limix.modules.varianceDecomposition as VAR
+    import limix.modules.qtl as QTL
+    if versiontuple(limix.__version__)>versiontuple('0.7.3'):
+            import limix.deprecated as limix
+except:
+    import limix.deprecated as limix
+    import limix.deprecated.modules.panama as PANAMA
+    import limix.deprecated.modules.varianceDecomposition as VAR
+    import limix.deprecated.modules.qtl as QTL
+    #print 'Limix version', limix.__version__
+    
+	
 import scipy as SP
 import scipy.linalg
 import scipy.stats
@@ -30,6 +41,9 @@ import time
 import copy
 import warnings
 import os
+from utils.misc import dumpDictHdf5
+from utils.misc import PCA 
+from utils.misc import warning_on_one_line 
 from gp_clvm import gpCLVM
 
 class scLVM:
@@ -354,7 +368,7 @@ class scLVM:
 					_K = K[0]
 			else:
 				_K = None
-			lm = QTL.test_lmm(expr,Ystd[:,ids:ids+1],K=_K,**lmm_params)
+			lm = QTL.test_lmm(expr,Ystd[:,ids:ids+1],K=_K,verbose=False,**lmm_params)   
 			pv[count,:]   = lm.getPv()[0,:]
 			beta[count,:] = lm.getBetaSNP()[0,:]
 			count+=1

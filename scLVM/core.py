@@ -14,13 +14,24 @@
 
 import sys
 sys.path.append('./..')
-import limix
-import limix.modules.panama as PANAMA
-import limix.modules.varianceDecomposition as VAR
-import limix.modules.qtl as QTL
+#import limix #make sure we use the right limix version
+
 from utils.misc import dumpDictHdf5
 from utils.misc import PCA 
 from utils.misc import warning_on_one_line 
+import limix
+try:
+    limix.__version__
+    if versiontuple(limix.__version__)>versiontuple('0.7.3'):
+        import limix.deprecated as limix
+
+except:
+    import limix.deprecated as limix    
+
+import limix.modules.panama as PANAMA
+import limix.modules.varianceDecomposition as VAR
+import limix.modules.qtl as QTL
+
 import scipy as SP
 import scipy.linalg
 import scipy.stats
@@ -37,8 +48,9 @@ class scLVM:
 	This class takes care of fitting and interpreting latent variable models to account for confounders in  single-cell RNA-Seq data 
 	This module requires LIMIX
 	"""
-	
+
 	def __init__(self,Y,geneID=None,tech_noise=None):
+     
 		"""
 		Args:
 			Y:			  	gene expression matrix [N, G]
@@ -187,13 +199,13 @@ class scLVM:
 				var[count,-2] = SP.maximum(0,y.var()-tech_noise[ids])
 				var[count,-1] = tech_noise[ids]
 				count+=1;
+				if self.geneID!=None:	geneID[count] = self.geneID[ids]
 				continue
 			_var = vc.getVarianceComps()[0,:]
 			KiY = vc.gp.agetKEffInvYCache().ravel()
 			for ki in range(len(K)):
 				Ystar[ki][:,count]=_var[ki]*SP.dot(K[ki],KiY)
 			var[count,:] = _var
-			if self.geneID!=None:	geneID[count] = self.geneID[ids]
 			count+=1;
 	
 		# col header
@@ -290,6 +302,7 @@ class scLVM:
 							gene_row:   annotate rows of matrices
 		"""
 		assert self.var!=None, 'scLVM:: when multiple hidden factors are considered, varianceDecomposition decomposition must be used prior to this method'
+#		print QTL
 
 		if idx==None:
 			if i0==None or i1==None:
@@ -325,7 +338,7 @@ class scLVM:
 					_K = K[0]
 			else:
 				_K = None
-			lm = QTL.test_lmm(Ystd,Ystd[:,ids:ids+1],K=_K,**lmm_params)
+			lm = QTL.test_lmm(Ystd,Ystd[:,ids:ids+1],K=_K,verbose=False,**lmm_params)
 			pv[count,:]   = lm.getPv()[0,:]
 			beta[count,:] = lm.getBetaSNP()[0,:]
 			if self.geneID!=None:   geneID[count] = self.geneID[ids]
