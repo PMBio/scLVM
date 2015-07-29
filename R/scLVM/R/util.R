@@ -335,10 +335,34 @@ getVariableGenes <- function(nCountsEndo, fit, method = "fit", threshold = 0.1, 
     is_het[is.na(is_het)] = FALSE
     
     if(plot==TRUE){
-      plot( meansEndo, cv2Endo, log="xy", col=1+is_het,ylim=c(0.1,95), xlab='Mean Counts', ylab='CV2 Counts')
+      #cairo_pdf('./tech_noise_genes_sfEndo.pdf',width=4.5,height=4.5)
+      plot( meansEndo, cv2Endo, log="xy", col=1+is_het,ylim=c(0.1,250), xlab='Mean Counts', ylab='CV2 Counts')
       xg <- 10^seq( -3, 5, length.out=100 )
       lines( xg, coefficients(fit)[1] + coefficients(fit)[2]/xg,lwd=2,col='green' )      
-      legend('bottomright',c('Endo. genes','Var. genes',"Fit"),pch=c(1,1,NA),lty = c(NA,NA,1),col=c('black','red', 'green'),cex=0.7)   
+      try(points( meansERCC, cv2ERCC, pch=20, cex=1, col="blue" ))
+      legend('bottomleft',c('Endo. genes','Var. genes','ERCCs',"Fit"),pch=c(1,1,20,NA),lty = c(NA,NA,NA,1),col=c('black','red','blue', 'green'),cex=0.7)   
+      #dev.off()
+    
+#       cairo_pdf('./tech_noise_genes.pdf',width=4.5,height=4.5)
+#       plot(NULL, , xaxt="n", yaxt="n",log="xy", col=1+(padjA<0.1),ylim=c(0.1,95),xlim=c(5e-4,3e5), xlab='Mean Counts', ylab='CV2 Counts')
+#       axis( 1, 10^(-2:5), c("0.01", "0.1", "1", "10", "100", "1000",
+#                             expression(10^4), expression(10^5) ) )
+#       axis( 2, 10^(-2:1), c( "0.01", "0.1", "1", "10" ), las=2 )
+#       abline( h=10^(-2:1), v=10^(-2:5), col="#D0D0D0", lwd=2 )
+#       
+#       points( meansEndo, cv2Endo, , pch=20, cex=.2,
+#               #col = ifelse( padjA < .1, "#C0007090", "#70500040" ))
+#               col = ifelse( is_het, "#C0007090", "#70500040" ))
+#       xg <- 10^seq( -3, 5, length.out=100 )
+#       #lines( xg, coefficients(fitA)["a0"] + coefficients(fitA)["a1tilde"]/xg,lwd=2,col='blue' )
+#       lines( xg, coefficients(fit)[1] + coefficients(fit)[2]/xg,lwd=2,col='green' )      
+#       # Add the normalised ERCC points
+#       try(points( meansERCC, cv2ERCC, pch=20, cex=1, col="blue" ))
+#       legend('bottomright',c('Endo. genes','Var. genes',"Fit"),pch=c(1,1,NA),lty = c(NA,NA,1),col=c('black','red', 'green'),cex=0.7)         
+#       dev.off()
+#       
+    
+    
     }
     
   }
@@ -346,12 +370,14 @@ getVariableGenes <- function(nCountsEndo, fit, method = "fit", threshold = 0.1, 
     LCountsEndo <- log10(nCountsEndo+1)
     LmeansEndo <- rowMeans( LCountsEndo )
     Lcv2Endo = rowVars(LCountsEndo)/LmeansEndo^2
-    is_het = (0.5*coefficients(fit)["a"] *10^(-coefficients(fit)["k"]*LmeansEndo) < Lcv2Endo) &  LmeansEndo>0.3  
+    is_het = (coefficients(fit)["a"] *10^(-coefficients(fit)["k"]*LmeansEndo) < Lcv2Endo) &  LmeansEndo>0.5  
     
     if(plot==TRUE){
-      plot( LmeansEndo, Lcv2Endo, log="y", col=1+is_het,ylim=c(1e-3,1e2),xlab='meansLogEndo',ylab='cv2LogEndo')
+      #plot( LmeansEndo, Lcv2Endo, log="y", col=1+is_het,ylim=c(1e-3,1e2),xlab='meansLogEndo',ylab='cv2LogEndo')
+      plot( LmeansEndo, Lcv2Endo, log="y", col=1+is_het,xlab='meansLogEndo',ylab='cv2LogEndo')
+      
       xg <- seq( 0, 5.5, length.out=100 )
-      lines( xg, 0.5*coefficients(fit)[1] *10^(-coefficients(fit)[2]*xg ),lwd=2,col='green' )
+      lines( xg, coefficients(fit)[1] *10^(-coefficients(fit)[2]*xg ),lwd=2,col='green' )
       legend('bottomright',c('Endo. genes','Var. genes',"Fit"),pch=c(1,1,NA),lty = c(NA,NA,1),col=c('black','red', 'blue'),cex=0.7)   
       
     }
@@ -362,7 +388,7 @@ getVariableGenes <- function(nCountsEndo, fit, method = "fit", threshold = 0.1, 
     meansEndo <- rowMeans( nCountsEndo )
     varsEndo <- rowVars( nCountsEndo )
     cv2Endo <- varsEndo/meansEndo^2
-    is_het = (coefficients(fit)[[1]] + coefficients(fit)[[2]]/meansEndo) < cv2Endo &  meansEndo>2
+    is_het = (coefficients(fit)[[1]] + coefficients(fit)[[2]]/meansEndo) < cv2Endo #&  meansEndo>2
     
     if(plot==TRUE){
       plot( meansEndo, cv2Endo, log="xy", col=1+is_het,ylim=c(0.1,95), xlab='Mean Counts', ylab='CV2 Counts')

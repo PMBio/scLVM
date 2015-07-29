@@ -54,7 +54,7 @@ setMethod(f = "fitFactor",
             if(is.null(idx) + is.null(geneSet) != 1)stop("Provide either gene identifiers (geneSet) OR indices (idx)")
             
             if(!is.null(geneSet)){
-              idx_geneSet <- na.omit(match(ens_ids_cc, geneID))
+              idx_geneSet <- na.omit(match(geneSet, Object@geneID))
               idx = intersect(which(colMeans(Object@Y)>0),idx_geneSet)
               if(length(idx)==0){stop("Couldn't find any matches between geneSet and geneIDs. Make sure they are of the same type (ENSEMBL if possible)")}
             }
@@ -172,7 +172,7 @@ setMethod(f = "LMM",
             if(is.null(idx) + is.null(geneSet) != 1)stop("Provide either gene identifiers (geneSet) OR indices (idx)")
             
             if(!is.null(geneSet)){
-              idx_geneSet <- na.omit(match(ens_ids_cc, geneID))
+              idx_geneSet <- na.omit(match(geneSet, Object@geneID))
               idx = intersect(which(colMeans(Object@Y)>0),idx_geneSet)
               if(length(idx)==0){stop("Couldn't find any matches between geneSet and geneIDs. Make sure they are of the same type (ENSEMBL if possible)")}
             }
