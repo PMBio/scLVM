@@ -1,7 +1,7 @@
 Package: scLVM
 Type: Package
 Title: Dissecting heterogeneity in single-cell RNA-seq experiments.
-Version: 0.99.1
+Version: 0.99.2
 Date: 2015-04-09
 Author: Florian Buettner, Paolo Casale, Oliver Stegle
 Maintainer:Florian Buettner <buettner@ebi.ac.uk>

@@ -166,27 +166,31 @@ fitTechnicalNoise <- function(nCountsEndo,nCountsERCC=NULL,
       Lcv2Endo <- LvarsEndo / LmeansEndo^2
       
       if(!is.null(fit_opts)){
-        if("minmean" %in% names(fit_opts)){minmean = fit_opts$minmean}else{minmean=2}
+        if("minmean" %in% names(fit_opts)){minmean = fit_opts$minmean}else{fit_opts$minmean=0.3}
+        if("offset" %in% names(fit_opts)){offset = fit_opts$offset}else{fit_opts$offset=1}
       }else{
-        minmean = 0.3
+        fit_opts$minmean = 0.3
+        fit_opts$offset=1
       }
       
       LogNcountsList = list()
-      useForFitL = LmeansEndo>minmean
+      useForFitL = LmeansEndo>fit_opts$minmean
       LogNcountsList$mean = LmeansEndo[useForFitL]
       LogNcountsList$cv2 = Lcv2Endo[useForFitL]
       fit_loglin = nls(cv2 ~ a* 10^(-k*mean), LogNcountsList,start=c(a=10,k=2))
-      LogVar_techEndo_logfit <- coefficients(fit_loglin)["a"] *10^(-coefficients(fit_loglin)["k"]*LmeansEndo)*LmeansEndo^2
+      fit_loglin$opts = fit_opts      
+      LogVar_techEndo_logfit <- fit_opts$offset* coefficients(fit_loglin)["a"] *10^(-coefficients(fit_loglin)["k"]*LmeansEndo)*LmeansEndo^2
       
       if(plot==TRUE){
         plot( LmeansEndo, Lcv2Endo, log="y", col=1,ylim=c(1e-3,1e2),xlab='meansLogEndo',ylab='cv2LogEndo')
         xg <- seq( 0, 5.5, length.out=100 )
-        lines( xg, coefficients(fit_loglin)["a"] *10^(-coefficients(fit_loglin)["k"]*xg ),lwd=2,col='green' )
+        lines( xg, fit_opts$offset*coefficients(fit_loglin)["a"] *10^(-coefficients(fit_loglin)["k"]*xg ),lwd=2,col='green' )
       }
       
       res = list()
       res$fit = fit_loglin
       res$techNoiseLog = LogVar_techEndo_logfit
+      
       
     }
     if(fit_type=='counts'){
@@ -277,6 +281,7 @@ fitTechnicalNoise <- function(nCountsEndo,nCountsERCC=NULL,
     }
     
   }
+  res$fit_opts = fit_opts
   res    
 }
 
@@ -370,14 +375,14 @@ getVariableGenes <- function(nCountsEndo, fit, method = "fit", threshold = 0.1, 
     LCountsEndo <- log10(nCountsEndo+1)
     LmeansEndo <- rowMeans( LCountsEndo )
     Lcv2Endo = rowVars(LCountsEndo)/LmeansEndo^2
-    is_het = (coefficients(fit)["a"] *10^(-coefficients(fit)["k"]*LmeansEndo) < Lcv2Endo) &  LmeansEndo>0.5  
+    is_het = (fit$opts$offset * coefficients(fit)["a"] *10^(-coefficients(fit)["k"]*LmeansEndo) < Lcv2Endo) &  LmeansEndo>fit$opts$minmean 
     
     if(plot==TRUE){
       #plot( LmeansEndo, Lcv2Endo, log="y", col=1+is_het,ylim=c(1e-3,1e2),xlab='meansLogEndo',ylab='cv2LogEndo')
       plot( LmeansEndo, Lcv2Endo, log="y", col=1+is_het,xlab='meansLogEndo',ylab='cv2LogEndo')
       
       xg <- seq( 0, 5.5, length.out=100 )
-      lines( xg, coefficients(fit)[1] *10^(-coefficients(fit)[2]*xg ),lwd=2,col='green' )
+      lines( xg, fit$opts$offset * coefficients(fit)[1] *10^(-coefficients(fit)[2]*xg ),lwd=2,col='green' )
       legend('bottomright',c('Endo. genes','Var. genes',"Fit"),pch=c(1,1,NA),lty = c(NA,NA,1),col=c('black','red', 'blue'),cex=0.7)   
       
     }
