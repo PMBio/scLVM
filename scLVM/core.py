@@ -67,7 +67,7 @@ class scLVM:
 		self.geneID = geneID
 		self.tech_noise = None
 		self.var=None
-		if tech_noise!=None:
+		if tech_noise is not None:
 			self.set_tech_noise(tech_noise)
 
 	
@@ -89,7 +89,7 @@ class scLVM:
 			Kconf:			similarity matrix based on the confounding effect (XX.T)
 			varGPLVM:		variance contributions of latent factors and residual biological noise
 		"""
-		assert idx!=None, 'scLVM:: specify idx'
+		assert idx is not None, 'scLVM:: specify idx'
 		if use_ard==True and  k<2:
 			warnings.formatwarning = warning_on_one_line
 			warnings.warn('when using ARD consider choosing k>1')
@@ -150,16 +150,16 @@ class scLVM:
 			verbose:		if True, print progresses
 		"""
 
-		if tech_noise!=None:		self.set_tech_noise(tech_noise)
-		assert self.tech_noise!=None, 'scLVM:: specify technical noise'
-		assert K!=None, 'scLVM:: specify K'
+		if tech_noise is not None:		self.set_tech_noise(tech_noise)
+		assert self.tech_noise is not None, 'scLVM:: specify technical noise'
+		assert K is not None, 'scLVM:: specify K'
 
 		if type(K)!=list:	K = [K]
 		for k in K:
 			assert k.shape[0]==self.N, 'scLVM:: K dimension dismatch'
 			assert k.shape[1]==self.N, 'scLVM:: K dimension dismatch'
 
-		if idx==None:
+		if idx is None:
 			if i0==None or i1==None:
 				i0 = 0; i1 = self.G
 			idx = SP.arange(i0,i1)
@@ -199,7 +199,7 @@ class scLVM:
 				var[count,-2] = SP.maximum(0,y.var()-tech_noise[ids])
 				var[count,-1] = tech_noise[ids]
 				count+=1;
-				if self.geneID!=None:	geneID[count] = self.geneID[ids]
+				if self.geneID is not None:	geneID[count] = self.geneID[ids]
 				continue
 			_var = vc.getVarianceComps()[0,:]
 			KiY = vc.gp.agetKEffInvYCache().ravel()
@@ -216,9 +216,9 @@ class scLVM:
 
 		# annotate column and rows of var and Ystar
 		var_info = {'gene_idx':idx,'col_header':col_header,'conv':conv}
-		if geneID!=None:	var_info['geneID'] = SP.array(geneID)
+		if geneID is not None:	var_info['geneID'] = SP.array(geneID)
 		Ystar_info = {'gene_idx':idx,'conv':conv}
-		if geneID!=None:	Ystar_info['geneID'] = SP.array(geneID)
+		if geneID is not None:	Ystar_info['geneID'] = SP.array(geneID)
 
 		# cache stuff
 		self.var   = var
@@ -239,7 +239,7 @@ class scLVM:
 							conv:		boolean vetor marking genes for which variance decomposition has converged
 							geneID:	 annotate rows of the variance component matrix
 		"""
-		assert self.var!=None, 'scLVM:: use varianceDecomposition method before'
+		assert self.var is not None, 'scLVM:: use varianceDecomposition method before'
 		if normalize:	var = self.var/self.var.sum(1)[:,SP.newaxis]
 		else:			var = self.var
 		return var, self.var_info
@@ -255,7 +255,7 @@ class scLVM:
 							conv:		boolean vetor marking genes for which variance decomposition has converged
 							geneID:	 annotate rows of the variance component matrix
 		"""
-		assert self.var!=None, 'scLVM:: use varianceDecomposition method before'
+		assert self.var is not None, 'scLVM:: use varianceDecomposition method before'
 		if len(self.Ystar)==1:	Ystar = self.Ystar[0]
 		else:					Ystar = self.Ystar
 		return Ystar, self.Ystar_info
@@ -267,7 +267,7 @@ class scLVM:
 		Returns:
 			Ycorr:		corrected expression levels
 		"""
-		assert self.var!=None, 'scLVM:: use varianceDecomposition method before'
+		assert self.var is not None, 'scLVM:: use varianceDecomposition method before'
 
 		# check rand_eff_ids
 		if rand_eff_ids==None:			rand_eff_ids=range(len(self.Ystar))
@@ -301,7 +301,7 @@ class scLVM:
 							conv:		boolean vetor marking genes for which variance decomposition has converged
 							gene_row:   annotate rows of matrices
 		"""
-		assert self.var!=None, 'scLVM:: when multiple hidden factors are considered, varianceDecomposition decomposition must be used prior to this method'
+		assert self.var is not None, 'scLVM:: when multiple hidden factors are considered, varianceDecomposition decomposition must be used prior to this method'
 #		print QTL
 
 		if idx==None:
@@ -311,7 +311,7 @@ class scLVM:
 		elif type(idx)!=SP.ndarray:
 			idx = SP.array([idx])
 
-		if K!=None and type(K)!=list:	K = [K]
+		if K is not None and type(K)!=list:	K = [K]
 
 		lmm_params = {'covs':SP.ones([self.N,1]),'NumIntervalsDeltaAlt':100,'NumIntervalsDelta0':100,'searchDelta':True}
 
@@ -327,7 +327,7 @@ class scLVM:
 			if verbose:
 				print '.. fitting gene %d'%ids
 			# extract a single gene
-			if K!=None:
+			if K is not None:
 				if len(K)>1:
 					if self.var_info['conv'][count]==True:
 						_K = SP.sum([var[count,i]*K[i] for i in range(len(K))],0)
@@ -341,11 +341,11 @@ class scLVM:
 			lm = QTL.test_lmm(Ystd,Ystd[:,ids:ids+1],K=_K,verbose=False,**lmm_params)
 			pv[count,:]   = lm.getPv()[0,:]
 			beta[count,:] = lm.getBetaSNP()[0,:]
-			if self.geneID!=None:   geneID[count] = self.geneID[ids]
+			if self.geneID is not None:   geneID[count] = self.geneID[ids]
 			count+=1
 
 		info = {'conv':self.var_info['conv'],'gene_idx_row':idx}
-		if geneID!=None:	info['gene_row'] = geneID
+		if geneID is not None:	info['gene_row'] = geneID
 
 		return pv, beta, info
 		
