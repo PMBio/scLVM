@@ -192,7 +192,7 @@ class scLVM:
 			for iter_i in range(max_iter):
 				scales0 = y.std()*SP.randn(len(K)+2)
 				scales0[len(K)+1]=SP.sqrt(tech_noise[ids]);
-				_conv = vc.optimize(scales0=scales0)
+				_conv = vc.optimize(scales0=scales0, n_times=2)
 				if _conv: break
 			conv[count] = _conv
 			if not _conv:
