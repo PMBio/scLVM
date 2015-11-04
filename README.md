@@ -36,6 +36,8 @@ A good starting point are the tutorials for our [R package](https://github.com/P
 
 For an illustration of how scLVM can be applied to the T-cell data considered in Buettner et al. [1], we have prepared a notebook that can be viewed [interactively](http://nbviewer.ipython.org/github/pmbio/scLVM/blob/master/tutorials/tcell_demo.ipynb) or alternatively as [PDF](https://github.com/PMBio/scLVM/blob/master/tutorials/tcell_demo.pdf) export. This is also available for the [R package](https://github.com/PMBio/scLVM/blob/master/R/tutorials/scLVM_vignette.Rmd).
 
+While in principle both the R package and the python package have the same funcitonality, we recommend using the R package as more extensive documentation is available and the focus of development currently lies on the R package.
+
 
 ##Problems ?
 
