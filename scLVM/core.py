@@ -71,7 +71,7 @@ class scLVM:
 			self.set_tech_noise(tech_noise)
 
 	
-	def fitGPLVM(self,idx=None,k=1,standardize=False,out_dir='./cache',file_name=None,recalc=False, use_ard=False):
+	def fitGPLVM(self,idx=None,k=1,standardize=False,out_dir='./cache',file_name=None,recalc=False, use_ard=False, save_K=True):
 		"""
 		Args:
 			idx:			index of the genes involved
@@ -110,14 +110,15 @@ class scLVM:
 			else:
 				varGPLVM = {'X_ARD':var['LinearARD'],'noise':var['noise']}
 			# export results
-			if not os.path.exists(out_dir):
-				os.makedirs(out_dir)
-			fout = h5py.File(file_out,'w')
-			RV = {'X':X,'Kconf':Kconf}
-			RV['cc_noise_filtered'] = idx
-			dumpDictHdf5(RV,fout)
-			dumpDictHdf5(varGPLVM,fout)
-			fout.close()
+			if save_K==True:    
+				if not os.path.exists(out_dir):
+					os.makedirs(out_dir)
+    				fout = h5py.File(file_out,'w')
+    				RV = {'X':X,'Kconf':Kconf}
+    				RV['cc_noise_filtered'] = idx
+    				dumpDictHdf5(RV,fout)
+    				dumpDictHdf5(varGPLVM,fout)
+    				fout.close()
 		else:
 			# load results from the file
 			f = h5py.File(file_out,'r')
