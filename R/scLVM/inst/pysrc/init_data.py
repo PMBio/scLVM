@@ -1,7 +1,7 @@
 import sys
 import scipy as SP
-import pylab as PL
-from matplotlib import cm
+#import pylab as PL
+#from matplotlib import cm
 import h5py
 import warnings
 #make sure your paths point to limix and scLVM directories
