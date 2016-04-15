@@ -530,5 +530,5 @@ arrange_ggplot2 <- function(..., nrow=NULL, ncol=NULL, as.table=FALSE) {
 configLimix <- function(limix_path){
   python.assign('limix_path', limix_path)
   python.exec("sys.path.append(limix_path)")
-  python.load(system.file("py","init_data.py",package="scLVM"))  
+  python.load(system.file("pysrc","init_data.py",package="scLVM"))  
 }
