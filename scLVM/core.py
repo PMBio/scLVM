@@ -15,7 +15,6 @@
 from __future__ import division, print_function, absolute_import
 
 import sys
-sys.path.append('./..')
 #import limix #make sure we use the right limix version
 
 from .utils.misc import dumpDictHdf5

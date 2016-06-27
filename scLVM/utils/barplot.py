@@ -16,7 +16,6 @@ from __future__ import division, absolute_import
 import scipy as SP
 import sys
 import os
-sys.path.append('../')
 import pdb
 import glob
 import pickle
