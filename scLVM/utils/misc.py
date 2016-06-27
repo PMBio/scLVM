@@ -36,7 +36,7 @@ def dumpDictHdf5(RV,o):
 def smartDumpDictHdf5(RV,o):
 	""" Dump a dictionary where each page is a list or an array or still a dictionary (in this case, it iterates)"""
 	for key in RV.keys():
-		if type(RV[key])==dict:
+		if isinstance(RV[key], dict):
 			g = o.create_group(key)
 			smartDumpDictHdf5(RV[key],g)
 		else:

@@ -12,21 +12,23 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 
+from __future__ import division, print_function, absolute_import
+
 import sys
 sys.path.append('./..')
 #import limix #make sure we use the right limix version
 
-from utils.misc import dumpDictHdf5
-from utils.misc import PCA 
-from utils.misc import warning_on_one_line 
+from .utils.misc import dumpDictHdf5
+from .utils.misc import PCA 
+from .utils.misc import warning_on_one_line 
 import limix
 try:
-    limix.__version__
-    if versiontuple(limix.__version__)>versiontuple('0.7.3'):
-        import limix.deprecated as limix
+	limix.__version__
+	if versiontuple(limix.__version__)>versiontuple('0.7.3'):
+		import limix.deprecated as limix
 
 except:
-    import limix.deprecated as limix    
+	import limix.deprecated as limix    
 
 import limix.modules.panama as PANAMA
 import limix.modules.varianceDecomposition as VAR
@@ -42,7 +44,7 @@ import copy
 import warnings
 import os
 
-class scLVM:
+class scLVM(object):
 	"""
 	Single Cell Latent Varible Model module (scLVM)
 	This class takes care of fitting and interpreting latent variable models to account for confounders in  single-cell RNA-Seq data 
@@ -50,7 +52,7 @@ class scLVM:
 	"""
 
 	def __init__(self,Y,geneID=None,tech_noise=None):
-     
+
 		"""
 		Args:
 			Y:			  	gene expression matrix [N, G]
@@ -113,12 +115,12 @@ class scLVM:
 			if save_K==True:    
 				if not os.path.exists(out_dir):
 					os.makedirs(out_dir)
-    				fout = h5py.File(file_out,'w')
-    				RV = {'X':X,'Kconf':Kconf}
-    				RV['cc_noise_filtered'] = idx
-    				dumpDictHdf5(RV,fout)
-    				dumpDictHdf5(varGPLVM,fout)
-    				fout.close()
+					fout = h5py.File(file_out,'w')
+					RV = {'X':X,'Kconf':Kconf}
+					RV['cc_noise_filtered'] = idx
+					dumpDictHdf5(RV,fout)
+					dumpDictHdf5(varGPLVM,fout)
+					fout.close()
 		else:
 			# load results from the file
 			f = h5py.File(file_out,'r')
@@ -155,16 +157,17 @@ class scLVM:
 		assert self.tech_noise is not None, 'scLVM:: specify technical noise'
 		assert K is not None, 'scLVM:: specify K'
 
-		if type(K)!=list:	K = [K]
+		if not isinstance(K, list):
+			K = [K]
 		for k in K:
 			assert k.shape[0]==self.N, 'scLVM:: K dimension dismatch'
 			assert k.shape[1]==self.N, 'scLVM:: K dimension dismatch'
 
 		if idx is None:
-			if i0==None or i1==None:
+			if i0 is None or i1 is None:
 				i0 = 0; i1 = self.G
 			idx = SP.arange(i0,i1)
-		elif type(idx)!=SP.ndarray:
+		elif not isinstance(idx, SP.ndarray):
 			idx = SP.array([idx])
 
 		_G	 = len(idx)
@@ -179,7 +182,7 @@ class scLVM:
 		tech_noise = self.tech_noise/SP.array(self.Y.std(0))**2
 		for ids in idx:
 			if verbose:
-				print '.. fitting gene %d'%ids
+				print('.. fitting gene %d'%ids)
 			# extract a single gene
 			y = Ystd[:,ids:ids+1]
 			# build and fit variance decomposition model
@@ -244,7 +247,7 @@ class scLVM:
 		if normalize:	var = self.var/self.var.sum(1)[:,SP.newaxis]
 		else:			var = self.var
 		return var, self.var_info
- 
+
 	def getPredictions(self):
 		"""
 		Returns:
@@ -271,8 +274,10 @@ class scLVM:
 		assert self.var is not None, 'scLVM:: use varianceDecomposition method before'
 
 		# check rand_eff_ids
-		if rand_eff_ids==None:			rand_eff_ids=range(len(self.Ystar))
-		elif type(rand_eff_ids)!=list:	rand_eff_ids=[rand_eff_ids]
+		if rand_eff_ids is None:
+			rand_eff_ids = list(range(len(self.Ystar)))
+		elif not isinstance(rand_eff_ids, list):
+			rand_eff_ids = [rand_eff_ids]
 
 		# loop on random effect to consider and correct
 		#predicitive means were calculated for standardised expression
@@ -305,14 +310,16 @@ class scLVM:
 		assert self.var is not None, 'scLVM:: when multiple hidden factors are considered, varianceDecomposition decomposition must be used prior to this method'
 #		print QTL
 
-		if idx==None:
-			if i0==None or i1==None:
-				i0 = 0; i1 = self.G
+		if idx is None:
+			if i0 is None or i1 is None:
+				i0 = 0
+				i1 = self.G
 			idx = SP.arange(i0,i1)
-		elif type(idx)!=SP.ndarray:
+		elif not isinstance(idx, SP.ndarray):
 			idx = SP.array([idx])
 
-		if K is not None and type(K)!=list:	K = [K]
+		if K is not None and not isinstance(K, list):
+			K = [K]
 
 		lmm_params = {'covs':SP.ones([self.N,1]),'NumIntervalsDeltaAlt':100,'NumIntervalsDelta0':100,'searchDelta':True}
 
@@ -326,7 +333,7 @@ class scLVM:
 		var = self.var/self.var.sum(1)[:,SP.newaxis] 
 		for ids in idx:
 			if verbose:
-				print '.. fitting gene %d'%ids
+				print('.. fitting gene %d'%ids)
 			# extract a single gene
 			if K is not None:
 				if len(K)>1:

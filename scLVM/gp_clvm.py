@@ -15,6 +15,8 @@
 """Conditions CLVM code.
 This is currently experimental and not supported
 """
+from __future__ import division
+from __future__ import absolute_import
 
 import pdb
 import scipy as SP
@@ -24,7 +26,7 @@ import pdb
 
 import sys
 sys.path.append('./..')
-from utils.misc import regressOut
+from .utils.misc import regressOut
 
 # import limix
 

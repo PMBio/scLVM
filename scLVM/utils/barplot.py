@@ -1,3 +1,4 @@
+from __future__ import division, absolute_import
 # Copyright(c) 2014, The scLVM developers (Forian Buettner, Paolo Francesco Casale, Oliver Stegle)
 #
 #Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,13 +19,13 @@ import os
 sys.path.append('../')
 import pdb
 import glob
-import cPickle
+import pickle
 import h5py
 import matplotlib as mpl
 import pylab as PL
 import scipy.stats as ST
 import matplotlib.gridspec as gridspec
-from plot_format import *
+from .plot_format import *
 
 def simpleaxis(ax):
 	ax.spines['top'].set_visible(False)
@@ -63,7 +64,7 @@ def var_plot(var,H2,fields,normalize=False,plot_density=True,plot_element_count=
 	#xticks / xticks_labels
 	xticks = []
 	xticks_labels = []
-	for i in xrange(len(V_range)-1):
+	for i in range(len(V_range)-1):
 		#create label
 		xticks.append(V_range[i:i+1].mean())
 		xticks_labels.append('%d-%d%%' % tuple(V_range[i:i+2]*100))
@@ -82,7 +83,7 @@ def var_plot(var,H2,fields,normalize=False,plot_density=True,plot_element_count=
 
 		#plot box plot for each plot descriptora
 		_y = 0
-		for i in xrange(len(fields)):
+		for i in range(len(fields)):
 			field = fields[i]
 			#field is [index,legend,color]
 			#bar height
