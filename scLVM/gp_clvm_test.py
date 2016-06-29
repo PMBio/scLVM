@@ -1,5 +1,6 @@
+from __future__ import division, absolute_import
 import scipy as SP
-from gp_clvm import gpCLVM
+from .gp_clvm import gpCLVM
 import pdb
 import copy
 import pylab as PL
@@ -66,7 +67,7 @@ if __name__ == "__main__":
 			varV/= varV.sum()
 			PL.bar(SP.arange(varV.shape[0]),varV)
 			plt.set_xticks(SP.arange(varV.shape[0])+0.5)
-			plt.set_xticklabels(var.keys())
+			plt.set_xticklabels(list(var.keys()))
 			PL.savefig('./figures/X.pdf')
 			pdb.set_trace()
 			PL.clf()
@@ -96,7 +97,7 @@ if __name__ == "__main__":
 			_varV/= _varV.sum()
 			PL.bar(SP.arange(_varV.shape[0]),_varV)
 			plt.set_xticks(SP.arange(_varV.shape[0])+0.5)
-			plt.set_xticklabels(_var.keys())
+			plt.set_xticklabels(list(_var.keys()))
 			PL.savefig('./figures/X_noint.pdf')
 
 		pdb.set_trace()
