@@ -198,12 +198,13 @@ class scLVM(object):
 				_conv = vc.optimize(scales0=scales0, n_times=2)
 				if _conv: break
 			conv[count] = _conv
+			if self.geneID is not None:	geneID[count] = self.geneID[ids]
 			if not _conv:
 				var[count,-2] = SP.maximum(0,y.var()-tech_noise[ids])
 				var[count,-1] = tech_noise[ids]
 				count+=1;
-				if self.geneID is not None:	geneID[count] = self.geneID[ids]
 				continue
+			
 			_var = vc.getVarianceComps()[0,:]
 			KiY = vc.gp.agetKEffInvYCache().ravel()
 			for ki in range(len(K)):
