@@ -1,8 +1,8 @@
 Package: scLVM
 Type: Package
 Title: Dissecting heterogeneity in single-cell RNA-seq experiments.
-Version: 0.99.2
-Date: 2015-04-09
+Version: 0.99.3
+Date: 2017-06-19
 Author: Florian Buettner, Paolo Casale, Oliver Stegle
 Maintainer:Florian Buettner <buettner@ebi.ac.uk>
 Description: scLVM is a modelling framework for single-cell RNA-seq data that can be used to dissect the observed heterogeneity into different sources, thereby allowing for the correction of confounding sources of variation.

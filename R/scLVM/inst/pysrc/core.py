@@ -14,23 +14,11 @@
 
 import sys
 sys.path.append('./..')
-import limix
-def versiontuple(v):
-    return tuple(map(int, (v.split("."))))
-try:
-    limix.__version__
-    import limix.modules.panama as PANAMA
-    import limix.modules.varianceDecomposition as VAR
-    import limix.modules.qtl as QTL
-    if versiontuple(limix.__version__)>versiontuple('0.7.3'):
-            import limix.deprecated as limix
-except:
-    import limix.deprecated as limix
-    import limix.deprecated.modules.panama as PANAMA
-    import limix.deprecated.modules.varianceDecomposition as VAR
-    import limix.deprecated.modules.qtl as QTL
-    #print 'Limix version', limix.__version__
-    
+import limix_legacy
+
+import limix_legacy.deprecated.modules.panama as PANAMA
+import limix_legacy.deprecated.modules.varianceDecomposition as VAR
+import limix_legacy.deprecated.modules.qtl as QTL    
 	
 import scipy as SP
 import scipy.linalg

@@ -19,18 +19,11 @@ sys.path.append('./..')
 from utils.misc import dumpDictHdf5
 from utils.misc import PCA 
 from utils.misc import warning_on_one_line 
-import limix
-try:
-    limix.__version__
-    if versiontuple(limix.__version__)>versiontuple('0.7.3'):
-        import limix.deprecated as limix
+import limix_legacy
 
-except:
-    import limix.deprecated as limix    
-
-import limix.modules.panama as PANAMA
-import limix.modules.varianceDecomposition as VAR
-import limix.modules.qtl as QTL
+import limix_legacy.deprecated.modules.panama as PANAMA
+import limix_legacy.deprecated.modules.varianceDecomposition as VAR
+import limix_legacy.deprecated.modules.qtl as QTL
 
 import scipy as SP
 import scipy.linalg

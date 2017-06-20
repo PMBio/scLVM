@@ -26,7 +26,8 @@ import sys
 sys.path.append('./..')
 from utils.misc import regressOut
 
-import limix
+import limix_legacy
+import limix_legacy.deprecated as limix
 
 class gpCLVM:#(object):
 	"""
