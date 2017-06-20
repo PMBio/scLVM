@@ -20,7 +20,7 @@ Observed heterogeneity in single-cell profiling data is multi-factorial. scLVM p
 * It requires Python 2.7 with
   - scipy, h5py, numpy, pylab
 
-* In addition, scLVM relies heavily on [limix](https://github.com/PMBio/limix) (version 0.6.4 or higher).
+* In addition, scLVM relies heavily on [limix](https://github.com/limix/limix) (version 1.0.8 or higher).
 
 * If you would like to use the non-linear GPLVM for visualisation, we suggest installing the [GPy](https://github.com/SheffieldML/GPy) package. This can be installed using `pip install GPy`.
 
