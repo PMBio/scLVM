@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 # Copyright(c) 2014, The scLVM developers (Forian Buettner, Paolo Francesco Casale, Oliver Stegle)
 #
 #Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,11 +17,11 @@ __all__ = ['']
 
 __version__ = '0.1'
 
-import core
-from core import *
-from core import scLVM
-import gp_clvm
-from gp_clvm import gpCLVM
+from . import core
+from .core import *
+from .core import scLVM
+from . import gp_clvm
+from .gp_clvm import gpCLVM
 
 
 def getVerbose(verbose):

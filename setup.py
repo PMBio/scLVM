@@ -13,7 +13,7 @@ from os import path
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the relevant file
-with open(path.join(here, 'README'), encoding='utf-8') as f:
+with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
     
 reqs = ['numpy', 'scipy', 'pygp >=1.1.07', 'matplotlib >=1.2','h5py','limix >=1.0.8']
