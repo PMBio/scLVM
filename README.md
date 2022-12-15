@@ -1,5 +1,7 @@
 # scLVM
 
+## This is a version of scLVM with fixed imports
+You need a conda environment with python 3.10, pip, numpy and limix-legacy. Install scLVM from github by first forking, and then running "pip install ." inside the repo. However, some parameter changes are not fixed yet.
 
 ## What is scLVM?
 
