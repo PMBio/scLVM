@@ -17,9 +17,9 @@ from __future__ import division, print_function, absolute_import
 import sys
 #import limix #make sure we use the right limix version
 
-from utils.misc import dumpDictHdf5
-from utils.misc import PCA 
-from utils.misc import warning_on_one_line 
+from .utils.misc import dumpDictHdf5
+from .utils.misc import PCA 
+from .utils.misc import warning_on_one_line 
 import limix_legacy
 
 import limix_legacy.deprecated.modules.panama as PANAMA
